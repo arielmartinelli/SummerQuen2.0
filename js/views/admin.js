@@ -239,6 +239,12 @@ window.views.admin = {
             }
         });
 
+        // Eventos del Modal
+        const modalOverlay = document.getElementById("productModalOverlay");
+        const closeModalBtn = document.getElementById("closeProductModalBtn");
+        const cancelBtn = document.getElementById("cancelProductBtn");
+        const crudForm = document.getElementById("productCrudForm");
+
         const closeModal = () => {
             modalOverlay.classList.remove("active");
             crudForm.reset();
