@@ -73,6 +73,11 @@ class Router {
                 </div>
             `;
             
+            // Sincronizar en segundo plano con Supabase para asegurar los últimos datos de stock y buzón
+            if (window.state && typeof window.state.syncFromCloud === 'function') {
+                window.state.syncFromCloud().catch(err => console.error("Error al sincronizar datos de Supabase en cambio de ruta:", err));
+            }
+            
             // Retraso intencional mínimo para simular carga y hacer las transiciones más orgánicas
             setTimeout(() => {
                 try {

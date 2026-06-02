@@ -3,6 +3,61 @@
  * Emula una base de datos local usando localStorage con datos precargados.
  */
 
+// Cliente Supabase REST ligero
+const supabase = {
+    url: import.meta.env.VITE_SUPABASE_URL || "",
+    key: import.meta.env.VITE_SUPABASE_ANON_KEY || "",
+
+    isConfigured() {
+        return this.url && this.url !== "https://tu-proyecto-id.supabase.co" && this.key && this.key !== "tu-anon-key-publica-aqui";
+    },
+
+    async request(path, options = {}) {
+        if (!this.isConfigured()) return null;
+        const headers = {
+            "apikey": this.key,
+            "Authorization": `Bearer ${this.key}`,
+            "Content-Type": "application/json",
+            "Prefer": "return=representation",
+            ...options.headers
+        };
+        try {
+            const response = await fetch(`${this.url}/rest/v1/${path}`, {
+                ...options,
+                headers
+            });
+            if (!response.ok) {
+                const text = await response.text();
+                console.error(`Supabase HTTP ${response.status} en ${path}:`, text);
+                return null;
+            }
+            if (response.status === 204) return true;
+            return await response.json();
+        } catch (err) {
+            console.error(`Error de red al conectar con Supabase para ${path}:`, err);
+            return null;
+        }
+    },
+
+    async select(table) {
+        return this.request(`${table}?select=*`);
+    },
+
+    async upsert(table, data) {
+        return this.request(table, {
+            method: "POST",
+            headers: { "Prefer": "resolution=merge-duplicates,return=representation" },
+            body: JSON.stringify(data)
+        });
+    },
+
+    async delete(table, column, value) {
+        return this.request(`${table}?${column}=eq.${value}`, {
+            method: "DELETE"
+        });
+    }
+};
+
 // Helper para generar imágenes SVG modernas en Base64 para evitar depender de URLs externas
 function generateMockSvg(category, title, hexColor = "#e67e22") {
     const cleanTitle = title.replace(/['"<>]/g, "");
@@ -309,6 +364,183 @@ const SEED_ORDERS = [
 class StateManager {
     constructor() {
         this.initDatabase();
+        this.syncFromCloud();
+    }
+
+    async syncFromCloud() {
+        if (!supabase.isConfigured()) {
+            console.info("Supabase is not configured yet. Running in offline mode using localStorage.");
+            return;
+        }
+
+        try {
+            // Cargar en paralelo las 4 tablas de Supabase
+            const [products, orders, messages, settings] = await Promise.all([
+                supabase.select("sq_products"),
+                supabase.select("sq_orders"),
+                supabase.select("sq_messages"),
+                supabase.select("sq_settings")
+            ]);
+
+            let changed = false;
+
+            // 1. Sincronizar Configuración de Contacto
+            if (settings && settings.length > 0) {
+                const emailRow = settings.find(s => s.key === "email");
+                const whatsappRow = settings.find(s => s.key === "whatsapp");
+                const cloudSettings = {
+                    email: emailRow ? emailRow.value : "arielmartinelli2019@gmail.com",
+                    whatsapp: whatsappRow ? whatsappRow.value : "5493516121498"
+                };
+                const localSettings = JSON.parse(localStorage.getItem("sq_settings"));
+                if (JSON.stringify(cloudSettings) !== JSON.stringify(localSettings)) {
+                    localStorage.setItem("sq_settings", JSON.stringify(cloudSettings));
+                    changed = true;
+                }
+            } else {
+                // Tabla settings vacía, sembrar local en la nube
+                const currentSettings = JSON.parse(localStorage.getItem("sq_settings")) || {
+                    email: "arielmartinelli2019@gmail.com",
+                    whatsapp: "5493516121498"
+                };
+                await Promise.all([
+                    supabase.upsert("sq_settings", [{ key: "email", value: currentSettings.email }]),
+                    supabase.upsert("sq_settings", [{ key: "whatsapp", value: currentSettings.whatsapp }])
+                ]);
+            }
+
+            // 2. Sincronizar Productos
+            if (products && products.length > 0) {
+                const mappedProducts = products.map(p => ({
+                    id: p.id,
+                    title: p.title,
+                    category: p.category,
+                    price: Number(p.price),
+                    onSale: p.on_sale,
+                    salePrice: Number(p.sale_price),
+                    description: p.description,
+                    materials: p.materials,
+                    sizes: typeof p.sizes === 'string' ? JSON.parse(p.sizes) : p.sizes,
+                    colors: typeof p.colors === 'string' ? JSON.parse(p.colors) : p.colors,
+                    stock: Number(p.stock),
+                    featured: p.featured,
+                    image: p.image,
+                    images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
+                    variants: typeof p.variants === 'string' ? JSON.parse(p.variants) : p.variants
+                }));
+                const localProds = JSON.parse(localStorage.getItem("sq_products"));
+                if (JSON.stringify(mappedProducts) !== JSON.stringify(localProds)) {
+                    localStorage.setItem("sq_products", JSON.stringify(mappedProducts));
+                    changed = true;
+                    this.notifyChange("products");
+                }
+            } else {
+                // Sembrar productos locales
+                const localProds = JSON.parse(localStorage.getItem("sq_products")) || [];
+                if (localProds.length > 0) {
+                    const uploadProds = localProds.map(p => ({
+                        id: p.id,
+                        title: p.title,
+                        category: p.category,
+                        price: p.price,
+                        on_sale: p.onSale,
+                        sale_price: p.salePrice,
+                        description: p.description,
+                        materials: p.materials,
+                        sizes: JSON.stringify(p.sizes),
+                        colors: JSON.stringify(p.colors),
+                        stock: p.stock,
+                        featured: p.featured,
+                        image: p.image,
+                        images: JSON.stringify(p.images),
+                        variants: JSON.stringify(p.variants)
+                    }));
+                    await supabase.upsert("sq_products", uploadProds);
+                }
+            }
+
+            // 3. Sincronizar Pedidos
+            if (orders && orders.length > 0) {
+                const mappedOrders = orders.map(o => ({
+                    id: o.id,
+                    client: typeof o.client === 'string' ? JSON.parse(o.client) : o.client,
+                    items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items,
+                    subtotal: Number(o.subtotal),
+                    discount: Number(o.discount),
+                    tax: Number(o.tax),
+                    total: Number(o.total),
+                    paymentMethod: o.payment_method,
+                    status: o.status,
+                    date: o.date
+                }));
+                const localOrders = JSON.parse(localStorage.getItem("sq_orders"));
+                if (JSON.stringify(mappedOrders) !== JSON.stringify(localOrders)) {
+                    localStorage.setItem("sq_orders", JSON.stringify(mappedOrders));
+                    changed = true;
+                    this.notifyChange("orders");
+                }
+            } else {
+                // Sembrar pedidos locales
+                const localOrders = JSON.parse(localStorage.getItem("sq_orders")) || [];
+                if (localOrders.length > 0) {
+                    const uploadOrders = localOrders.map(o => ({
+                        id: o.id,
+                        client: JSON.stringify(o.client),
+                        items: JSON.stringify(o.items),
+                        subtotal: o.subtotal,
+                        discount: o.discount,
+                        tax: o.tax,
+                        total: o.total,
+                        payment_method: o.paymentMethod,
+                        status: o.status,
+                        date: o.date
+                    }));
+                    await supabase.upsert("sq_orders", uploadOrders);
+                }
+            }
+
+            // 4. Sincronizar Mensajes
+            if (messages && messages.length > 0) {
+                const mappedMessages = messages.map(m => ({
+                    id: m.id,
+                    name: m.name,
+                    email: m.email,
+                    phone: m.phone,
+                    subject: m.subject,
+                    message: m.message,
+                    date: m.date,
+                    read: m.read
+                }));
+                const localMessages = JSON.parse(localStorage.getItem("sq_messages"));
+                if (JSON.stringify(mappedMessages) !== JSON.stringify(localMessages)) {
+                    localStorage.setItem("sq_messages", JSON.stringify(mappedMessages));
+                    changed = true;
+                    this.notifyChange("messages");
+                }
+            } else {
+                // Sembrar mensajes locales
+                const localMessages = JSON.parse(localStorage.getItem("sq_messages")) || [];
+                if (localMessages.length > 0) {
+                    const uploadMessages = localMessages.map(m => ({
+                        id: m.id,
+                        name: m.name,
+                        email: m.email,
+                        phone: m.phone,
+                        subject: m.subject,
+                        message: m.message,
+                        date: m.date,
+                        read: m.read
+                    }));
+                    await supabase.upsert("sq_messages", uploadMessages);
+                }
+            }
+
+            if (changed) {
+                this.notifyChange("settings");
+            }
+        } catch (e) {
+            console.error("Cloud sync failed, using local cache:", e);
+        }
     }
 
     initDatabase() {
@@ -419,6 +651,28 @@ class StateManager {
         products.push(product);
         localStorage.setItem("sq_products", JSON.stringify(products));
         this.notifyChange("products");
+
+        // Sync con Supabase
+        if (supabase.isConfigured()) {
+            const uploadProd = {
+                id: product.id,
+                title: product.title,
+                category: product.category,
+                price: product.price,
+                on_sale: product.onSale,
+                sale_price: product.salePrice,
+                description: product.description,
+                materials: product.materials,
+                sizes: JSON.stringify(product.sizes),
+                colors: JSON.stringify(product.colors),
+                stock: product.stock,
+                featured: product.featured,
+                image: product.image,
+                images: JSON.stringify(product.images),
+                variants: JSON.stringify(product.variants)
+            };
+            supabase.upsert("sq_products", [uploadProd]);
+        }
         return product;
     }
 
@@ -445,6 +699,29 @@ class StateManager {
             products[index] = { ...products[index], ...updatedProduct };
             localStorage.setItem("sq_products", JSON.stringify(products));
             this.notifyChange("products");
+
+            // Sync con Supabase
+            if (supabase.isConfigured()) {
+                const prod = products[index];
+                const uploadProd = {
+                    id: prod.id,
+                    title: prod.title,
+                    category: prod.category,
+                    price: prod.price,
+                    on_sale: prod.onSale,
+                    sale_price: prod.salePrice,
+                    description: prod.description,
+                    materials: prod.materials,
+                    sizes: JSON.stringify(prod.sizes),
+                    colors: JSON.stringify(prod.colors),
+                    stock: prod.stock,
+                    featured: prod.featured,
+                    image: prod.image,
+                    images: JSON.stringify(prod.images),
+                    variants: JSON.stringify(prod.variants)
+                };
+                supabase.upsert("sq_products", [uploadProd]);
+            }
             return true;
         }
         return false;
@@ -456,6 +733,11 @@ class StateManager {
         if (filtered.length !== products.length) {
             localStorage.setItem("sq_products", JSON.stringify(filtered));
             this.notifyChange("products");
+
+            // Sync con Supabase
+            if (supabase.isConfigured()) {
+                supabase.delete("sq_products", "id", id);
+            }
             return true;
         }
         return false;
@@ -645,6 +927,47 @@ class StateManager {
         this.notifyChange("orders");
         this.notifyChange("products");
 
+        // Sync con Supabase
+        if (supabase.isConfigured()) {
+            // 1. Subir la orden
+            const uploadOrder = {
+                id: newOrder.id,
+                client: JSON.stringify(newOrder.client),
+                items: JSON.stringify(newOrder.items),
+                subtotal: newOrder.subtotal,
+                discount: newOrder.discount,
+                tax: newOrder.tax,
+                total: newOrder.total,
+                payment_method: newOrder.paymentMethod,
+                status: newOrder.status,
+                date: newOrder.date
+            };
+            supabase.upsert("sq_orders", [uploadOrder]);
+
+            // 2. Subir los productos con stock modificado
+            const modifiedProdIds = newOrder.items.map(item => item.productId);
+            const uploadProds = products.filter(p => modifiedProdIds.includes(p.id)).map(p => ({
+                id: p.id,
+                title: p.title,
+                category: p.category,
+                price: p.price,
+                on_sale: p.onSale,
+                sale_price: p.salePrice,
+                description: p.description,
+                materials: p.materials,
+                sizes: JSON.stringify(p.sizes),
+                colors: JSON.stringify(p.colors),
+                stock: p.stock,
+                featured: p.featured,
+                image: p.image,
+                images: JSON.stringify(p.images),
+                variants: JSON.stringify(p.variants)
+            }));
+            if (uploadProds.length > 0) {
+                supabase.upsert("sq_products", uploadProds);
+            }
+        }
+
         return newOrder;
     }
 
@@ -655,6 +978,23 @@ class StateManager {
             order.status = newStatus;
             localStorage.setItem("sq_orders", JSON.stringify(orders));
             this.notifyChange("orders");
+
+            // Sync con Supabase
+            if (supabase.isConfigured()) {
+                const uploadOrder = {
+                    id: order.id,
+                    client: JSON.stringify(order.client),
+                    items: JSON.stringify(order.items),
+                    subtotal: order.subtotal,
+                    discount: order.discount,
+                    tax: order.tax,
+                    total: order.total,
+                    payment_method: order.paymentMethod,
+                    status: order.status,
+                    date: order.date
+                };
+                supabase.upsert("sq_orders", [uploadOrder]);
+            }
             return true;
         }
         return false;
@@ -666,6 +1006,11 @@ class StateManager {
         if (filtered.length !== orders.length) {
             localStorage.setItem("sq_orders", JSON.stringify(filtered));
             this.notifyChange("orders");
+
+            // Sync con Supabase
+            if (supabase.isConfigured()) {
+                supabase.delete("sq_orders", "id", orderId);
+            }
             return true;
         }
         return false;
@@ -800,6 +1145,14 @@ class StateManager {
         };
         localStorage.setItem("sq_settings", JSON.stringify(settings));
         this.notifyChange("settings");
+
+        // Sync con Supabase
+        if (supabase.isConfigured()) {
+            Promise.all([
+                supabase.upsert("sq_settings", [{ key: "email", value: settings.email }]),
+                supabase.upsert("sq_settings", [{ key: "whatsapp", value: settings.whatsapp }])
+            ]);
+        }
         return true;
     }
 
@@ -823,6 +1176,11 @@ class StateManager {
         messages.push(newMessage);
         localStorage.setItem("sq_messages", JSON.stringify(messages));
         this.notifyChange("messages");
+
+        // Sync con Supabase
+        if (supabase.isConfigured()) {
+            supabase.upsert("sq_messages", [newMessage]);
+        }
         return newMessage;
     }
 
@@ -833,6 +1191,20 @@ class StateManager {
             msg.read = true;
             localStorage.setItem("sq_messages", JSON.stringify(messages));
             this.notifyChange("messages");
+
+            // Sync con Supabase
+            if (supabase.isConfigured()) {
+                supabase.upsert("sq_messages", [{
+                    id: msg.id,
+                    name: msg.name,
+                    email: msg.email,
+                    phone: msg.phone,
+                    subject: msg.subject,
+                    message: msg.message,
+                    date: msg.date,
+                    read: msg.read
+                }]);
+            }
             return true;
         }
         return false;
@@ -844,6 +1216,11 @@ class StateManager {
         if (filtered.length !== messages.length) {
             localStorage.setItem("sq_messages", JSON.stringify(filtered));
             this.notifyChange("messages");
+
+            // Sync con Supabase
+            if (supabase.isConfigured()) {
+                supabase.delete("sq_messages", "id", id);
+            }
             return true;
         }
         return false;
