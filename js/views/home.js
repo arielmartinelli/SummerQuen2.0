@@ -4,9 +4,10 @@
 
 window.views.home = {
     render: function(container, param, query) {
-        // Obtener productos destacados
+        // Obtener productos destacados y en oferta
         const products = window.state.getProducts();
         const featuredProducts = products.filter(p => p.featured || p.stock < 10).slice(0, 4);
+        const saleProducts = products.filter(p => p.onSale && p.salePrice > 0).slice(0, 4);
 
         // Renderizar estructura básica
         container.innerHTML = `
@@ -85,7 +86,7 @@ window.views.home = {
             </section>
 
             <!-- Productos Destacados -->
-            <section class="container" style="margin-bottom: 6rem;">
+            <section class="container" style="margin-bottom: 5rem;">
                 <div class="section-header">
                     <div class="section-header-title">
                         <h2>Productos Destacados</h2>
@@ -98,6 +99,27 @@ window.views.home = {
                     <!-- Cards se renderizan dinámicamente -->
                 </div>
             </section>
+
+            <!-- SECTOR DE OFERTAS ESPECIALES -->
+            ${saleProducts.length > 0 ? `
+            <section class="container" style="margin-bottom: 5rem;">
+                <div class="section-header">
+                    <div class="section-header-title">
+                        <h2 style="color: var(--color-danger); display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="flame" style="color: var(--color-danger);"></i> Ofertas Imperdibles
+                        </h2>
+                        <p>Aprovecha precios especiales y descuentos de confección por tiempo limitado.</p>
+                    </div>
+                    <a href="#/catalog?filter=sale" class="btn btn-outline" style="border-color: var(--color-danger); color: var(--color-danger);">
+                        Ver Todas las Ofertas
+                    </a>
+                </div>
+                
+                <div class="featured-grid" id="saleProductsGrid">
+                    <!-- Cards de ofertas se renderizan dinámicamente -->
+                </div>
+            </section>
+            ` : ''}
 
             <!-- Banner Promocional Estilo Confección -->
             <section style="background-color: var(--color-bg-alt); border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); padding: 5rem 0; margin-bottom: 6rem;">
@@ -128,6 +150,16 @@ window.views.home = {
                 cardsHtml += window.components.renderProductCard(prod);
             });
             grid.innerHTML = cardsHtml;
+        }
+
+        // Renderizar productos en oferta
+        const saleGrid = document.getElementById("saleProductsGrid");
+        if (saleGrid && saleProducts.length > 0) {
+            let saleCardsHtml = "";
+            saleProducts.forEach(prod => {
+                saleCardsHtml += window.components.renderProductCard(prod);
+            });
+            saleGrid.innerHTML = saleCardsHtml;
         }
 
         // Inicializar lógica de slider

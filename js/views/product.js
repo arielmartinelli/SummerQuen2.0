@@ -24,11 +24,33 @@ window.views.product = {
         };
 
         // Formatear precio
-        const formattedPrice = new Intl.NumberFormat('es-AR', {
+        const formatter = new Intl.NumberFormat('es-AR', {
             style: 'currency',
             currency: 'ARS',
             minimumFractionDigits: 0
-        }).format(product.price);
+        });
+
+        let priceHtml = "";
+        if (product.onSale && product.salePrice > 0) {
+            const discountPct = Math.round((1 - (product.salePrice / product.price)) * 100);
+            priceHtml = `
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;">
+                    <span style="text-decoration: line-through; color: var(--color-text-muted); font-size: 1.3rem; font-weight: 500;">
+                        ${formatter.format(product.price)}
+                    </span>
+                    <span style="font-size: 2.2rem; font-weight: 700; color: var(--color-danger);">
+                        ${formatter.format(product.salePrice)}
+                    </span>
+                    <span class="status-badge" style="background-color: var(--color-danger-bg); color: var(--color-danger); font-size: 0.85rem; font-weight: 700; padding: 0.4rem 0.8rem; border-radius: var(--border-radius-sm);">
+                        ¡${discountPct}% OFF!
+                    </span>
+                </div>
+            `;
+        } else {
+            priceHtml = `
+                <div class="product-price">${formatter.format(product.price)}</div>
+            `;
+        }
 
         // Estilos para galería
         const mainImage = product.image;
@@ -99,7 +121,7 @@ window.views.product = {
                             Categoría: ${product.category}
                         </span>
                         <h1 class="product-title">${product.title}</h1>
-                        <div class="product-price">${formattedPrice}</div>
+                        ${priceHtml}
                         
                         <p class="product-description">${product.description}</p>
                         

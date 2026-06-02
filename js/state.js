@@ -46,6 +46,8 @@ const SEED_PRODUCTS = [
         title: "Buzo Egresados Universe",
         category: "egresados",
         price: 28500,
+        onSale: true,
+        salePrice: 22800,
         description: "Buzo de algodón con friza premium. Diseño espacial bordado con hilos metálicos importados. Capucha forrada, puños reforzados y estampado personalizado con nombre en espalda.",
         materials: "80% Algodón Rústico, 20% Poliéster",
         sizes: ["S", "M", "L", "XL", "XXL"],
@@ -64,6 +66,8 @@ const SEED_PRODUCTS = [
         title: "Campera Varsity Retro",
         category: "egresados",
         price: 34900,
+        onSale: false,
+        salePrice: 0,
         description: "Campera universitaria estilo retro. Cuerpo de paño de lana sintética de alta densidad y mangas de cuero ecológico ultra suave. Broches a presión metálicos y apliques bordados de toalla.",
         materials: "Paño de lana sintética y mangas de eco-cuero",
         sizes: ["S", "M", "L", "XL"],
@@ -81,6 +85,8 @@ const SEED_PRODUCTS = [
         title: "Chomba Egresados Vintage",
         category: "egresados",
         price: 16500,
+        onSale: false,
+        salePrice: 0,
         description: "Chomba clásica confeccionada en pique peinado. Cuello de tejeduría reforzado con vivos en contraste y logo bordado en alta definición en el pecho. Corte ergonómico.",
         materials: "100% Algodón Pique Peinado",
         sizes: ["S", "M", "L", "XL", "XXL"],
@@ -95,6 +101,8 @@ const SEED_PRODUCTS = [
         title: "Mochila Urban Tech Rolltop",
         category: "mochilas",
         price: 22000,
+        onSale: true,
+        salePrice: 18700,
         description: "Mochila impermeable con sistema de cierre rolltop y hebilla magnética de liberación rápida. Compartimento acolchado independiente para notebooks de hasta 16 pulgadas. Espalda termoformada con canales de ventilación.",
         materials: "Cordura 1000D impermeable, Forro de Nylon ripstop",
         sizes: ["20L", "25L"],
@@ -113,6 +121,8 @@ const SEED_PRODUCTS = [
         title: "Mochila Canvas Classic",
         category: "mochilas",
         price: 19500,
+        onSale: false,
+        salePrice: 0,
         description: "Diseño clásico de lona de algodón de alta resistencia con detalles en cuero natural genuino. Hebillas de bronce viejo con sistema magnético oculto. Bolsillo frontal amplio y bolsillo interior porta-tablets.",
         materials: "Lona 100% Algodón, Detalles en Cuero Vacuno",
         sizes: ["18L"],
@@ -127,6 +137,8 @@ const SEED_PRODUCTS = [
         title: "Gorra Snapback Premium",
         category: "accesorios",
         price: 5500,
+        onSale: false,
+        salePrice: 0,
         description: "Gorra ajustable de 6 paneles con visera plana. Estructura frontal rígida y logo bordado 3D Summer Queen. Cierre snapback de plástico de alta resistencia.",
         materials: "80% Acrílico, 20% Lana",
         sizes: ["Talle Único Ajustable"],
@@ -141,6 +153,8 @@ const SEED_PRODUCTS = [
         title: "Piluso Reversible Summer",
         category: "accesorios",
         price: 6800,
+        onSale: false,
+        salePrice: 0,
         description: "Sombrero bucket (piluso) totalmente reversible. Lado A estampado digital con patrón camuflado exclusivo, Lado B color negro liso con mini etiqueta tejida de marca.",
         materials: "100% Microfibra de Poliéster",
         sizes: ["M (57cm)", "L (59cm)"],
@@ -155,6 +169,8 @@ const SEED_PRODUCTS = [
         title: "Cartuchera Rolla Canvas",
         category: "accesorios",
         price: 4200,
+        onSale: false,
+        salePrice: 0,
         description: "Cartuchera enrollable ideal para marcadores, pinceles y útiles de dibujo. Cierre mediante cordón de cuero sintético y solapa protectora interna para evitar caídas de los objetos.",
         materials: "Lona reforzada, Tira de cuero",
         sizes: ["Talle Único"],
@@ -310,6 +326,8 @@ class StateManager {
         if (!product.images || product.images.length === 0) {
             product.images = [product.image];
         }
+        product.onSale = !!product.onSale;
+        product.salePrice = parseFloat(product.salePrice) || 0;
         products.push(product);
         localStorage.setItem("sq_products", JSON.stringify(products));
         this.notifyChange("products");
@@ -327,6 +345,9 @@ class StateManager {
             if ((!updatedProduct.images || updatedProduct.images.length === 0) && products[index].images) {
                 updatedProduct.images = products[index].images;
             }
+            updatedProduct.onSale = !!updatedProduct.onSale;
+            updatedProduct.salePrice = parseFloat(updatedProduct.salePrice) || 0;
+            
             products[index] = { ...products[index], ...updatedProduct };
             localStorage.setItem("sq_products", JSON.stringify(products));
             this.notifyChange("products");
@@ -371,10 +392,11 @@ class StateManager {
         if (existingItem) {
             existingItem.quantity += parseInt(qty);
         } else {
+            const price = (product.onSale && product.salePrice > 0) ? product.salePrice : product.price;
             cart.push({
                 productId,
                 title: product.title,
-                price: product.price,
+                price: price,
                 image: product.image,
                 category: product.category,
                 quantity: parseInt(qty),

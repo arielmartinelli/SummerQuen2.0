@@ -79,22 +79,45 @@ window.components.showToast = function(message, type = "success") {
 
 // --- 3. RENDERING PRODUCT CARD (REUSABLE) ---
 window.components.renderProductCard = function(product) {
-    // Comprobar si hay bajo stock para mostrar etiqueta especial
+    // Comprobar si hay bajo stock o si está en oferta para mostrar etiqueta especial
     let badgeHtml = "";
-    if (product.stock <= 5 && product.stock > 0) {
-        badgeHtml = `<div class="product-badge" style="background-color: var(--color-warning);">¡Últimas ${product.stock} un.!</div>`;
+    if (product.onSale && product.salePrice > 0 && product.stock > 0) {
+        const discountPct = Math.round((1 - (product.salePrice / product.price)) * 100);
+        badgeHtml = `<div class="product-badge" style="background-color: var(--color-danger); z-index: 5;">¡${discountPct}% OFF!</div>`;
+    } else if (product.stock <= 5 && product.stock > 0) {
+        badgeHtml = `<div class="product-badge" style="background-color: var(--color-warning); z-index: 5;">¡Últimas ${product.stock} un.!</div>`;
     } else if (product.stock === 0) {
-        badgeHtml = `<div class="product-badge" style="background-color: var(--color-danger);">Sin Stock</div>`;
+        badgeHtml = `<div class="product-badge" style="background-color: var(--color-danger); z-index: 5;">Sin Stock</div>`;
     } else if (product.featured) {
-        badgeHtml = `<div class="product-badge">Destacado</div>`;
+        badgeHtml = `<div class="product-badge" style="z-index: 5;">Destacado</div>`;
     }
 
-    // Formatear precio en ARS
-    const formattedPrice = new Intl.NumberFormat('es-AR', {
+    const formatter = new Intl.NumberFormat('es-AR', {
         style: 'currency',
         currency: 'ARS',
         minimumFractionDigits: 0
-    }).format(product.price);
+    });
+
+    // Formatear precio (con descuento si aplica)
+    let priceHtml = "";
+    if (product.onSale && product.salePrice > 0) {
+        priceHtml = `
+            <div class="product-card-price" style="margin-top: 1rem; display: flex; align-items: center; flex-wrap: wrap;">
+                <span style="text-decoration: line-through; color: var(--color-text-muted); font-size: 0.95rem; margin-right: 0.8rem; font-weight: 500;">
+                    ${formatter.format(product.price)}
+                </span>
+                <span style="color: var(--color-danger); font-weight: 700;">
+                    ${formatter.format(product.salePrice)}
+                </span>
+            </div>
+        `;
+    } else {
+        priceHtml = `
+            <div class="product-card-price" style="margin-top: 1rem;">
+                ${formatter.format(product.price)}
+            </div>
+        `;
+    }
 
     // Variantes de colores para mostrar bolitas de colores debajo
     let colorsHtml = "";
@@ -134,8 +157,8 @@ window.components.renderProductCard = function(product) {
                     <a href="#/product/${product.id}">${product.title}</a>
                 </h3>
                 ${colorsHtml}
-                <div class="product-card-price" style="margin-top: 1rem;">${formattedPrice}</div>
-                <div style="display: flex; gap: 0.5rem; width:100%;">
+                ${priceHtml}
+                <div style="display: flex; gap: 0.5rem; width:100%; margin-top: auto;">
                     <a href="#/product/${product.id}" class="btn btn-outline btn-sm" style="flex-grow: 1;">Ver Detalles</a>
                     <button class="btn btn-primary btn-sm add-quick-cart" data-id="${product.id}" style="padding: 0.5rem;" aria-label="Agregar al carrito" ${product.stock === 0 ? 'disabled' : ''}>
                         <i data-lucide="shopping-cart" style="width: 16px; height: 16px;"></i>
