@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SummerQuen | Confección y Diseño Premium</title>
+    <meta name="description" content="E-commerce premium de confección y venta de indumentaria de egresados, mochilas y accesorios personalizados. Diseños únicos hechos a tu medida.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- Lucide Icons (CDN) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/views.css">
+</head>
+<body class="dark-theme">
+    <!-- Header / Navegación -->
+    <header class="header">
+        <div class="header-container container">
+            <a href="#/" class="logo">
+                <span class="logo-text-accent">Summer</span>Quen
+            </a>
+            
+            <nav class="nav-menu" id="navMenu">
+                <a href="#/" class="nav-link active" data-route="home">Inicio</a>
+                <a href="#/catalog" class="nav-link" data-route="catalog">Catálogo</a>
+                <a href="#/contact" class="nav-link" data-route="contact">Contacto</a>
+                <a href="#/admin" class="nav-link" data-route="admin">Panel Admin</a>
+            </nav>
+
+            <div class="header-actions">
+                <button id="themeToggle" class="icon-btn" aria-label="Cambiar tema">
+                    <i data-lucide="sun" class="theme-icon-light"></i>
+                    <i data-lucide="moon" class="theme-icon-dark"></i>
+                </button>
+                
+                <button id="cartBtn" class="icon-btn cart-toggle-btn" aria-label="Ver carrito">
+                    <i data-lucide="shopping-bag"></i>
+                    <span class="cart-badge" id="cartBadge">0</span>
+                </button>
+
+                <button id="mobileMenuBtn" class="icon-btn mobile-menu-toggle" aria-label="Menú móvil">
+                    <i data-lucide="menu"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal (Vistas Dinámicas) -->
+    <main id="app" class="main-content">
+        <!-- Renderizado dinámico de vistas por router.js -->
+        <div class="loader-container">
+            <div class="loader"></div>
+        </div>
+    </main>
+
+    <!-- Carrito Desplegable (Off-Canvas) -->
+    <div class="cart-drawer-overlay" id="cartOverlay"></div>
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-drawer-header">
+            <h3>Tu Carrito</h3>
+            <button id="closeCartBtn" class="icon-btn" aria-label="Cerrar carrito">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="cart-drawer-body" id="cartDrawerBody">
+            <!-- Renderizado dinámico de items en el carrito -->
+        </div>
+        <div class="cart-drawer-footer">
+            <div class="cart-totals">
+                <span>Subtotal:</span>
+                <span id="cartDrawerSubtotal">$0.00</span>
+            </div>
+            <div class="cart-totals discount-row" id="cartDrawerDiscountRow" style="display: none;">
+                <span>Descuento:</span>
+                <span id="cartDrawerDiscount">-$0.00</span>
+            </div>
+            <div class="cart-totals total-row">
+                <span>Total:</span>
+                <span id="cartDrawerTotal">$0.00</span>
+            </div>
+            <div class="cart-coupon-section">
+                <input type="text" id="couponInput" placeholder="Código de descuento (ej. SUMMER10)">
+                <button id="applyCouponBtn" class="btn btn-secondary">Aplicar</button>
+            </div>
+            <div id="couponMessage" class="coupon-msg"></div>
+            <button id="checkoutBtn" class="btn btn-primary btn-block">Iniciar Compra</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container container">
+            <div class="footer-info">
+                <h3><span class="logo-text-accent">Summer</span>Quen</h3>
+                <p>Confección de alta calidad para egresados, mochilas urbanas y accesorios de diseño. Cuidamos cada detalle de tu confección.</p>
+                <div class="social-links">
+                    <a href="https://instagram.com" target="_blank" class="social-link" aria-label="Instagram">
+                        <i data-lucide="instagram"></i>
+                    </a>
+                    <a href="https://facebook.com" target="_blank" class="social-link" aria-label="Facebook">
+                        <i data-lucide="facebook"></i>
+                    </a>
+                    <a href="https://wa.me/5491122334455" target="_blank" class="social-link" aria-label="WhatsApp">
+                        <i data-lucide="message-square"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="footer-links">
+                <h4>Navegación</h4>
+                <ul>
+                    <li><a href="#/">Inicio</a></li>
+                    <li><a href="#/catalog">Catálogo de Productos</a></li>
+                    <li><a href="#/contact">Contacto</a></li>
+                    <li><a href="#/admin">Panel Admin</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>Categorías</h4>
+                <ul>
+                    <li><a href="#/catalog?category=egresados">Ropa para Egresados</a></li>
+                    <li><a href="#/catalog?category=mochilas">Mochilas de Diseño</a></li>
+                    <li><a href="#/catalog?category=accesorios">Accesorios</a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h4>Atención al Cliente</h4>
+                <p><i data-lucide="map-pin"></i> Buenos Aires, Argentina</p>
+                <p><i data-lucide="mail"></i> info@summerquen.com</p>
+                <p><i data-lucide="phone"></i> +54 9 11 2233-4455</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 SummerQuen. Todos los derechos reservados. Diseñado para egresados y mentes creativas.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/state.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/views/home.js"></script>
+    <script src="js/views/catalog.js"></script>
+    <script src="js/views/product.js"></script>
+    <script src="js/views/checkout.js"></script>
+    <script src="js/views/contact.js"></script>
+    <script src="js/views/admin.js"></script>
+    <script src="js/router.js"></script>
+</body>
+</html>
