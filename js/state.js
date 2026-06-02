@@ -252,6 +252,12 @@ class StateManager {
     }
 
     initDatabase() {
+        // Auto-limpieza de caché local antigua si detecta el correo de desarrollo viejo
+        const rawUsers = localStorage.getItem("sq_users");
+        if (rawUsers && rawUsers.includes("admin@summerquen.com")) {
+            localStorage.clear();
+        }
+
         // Inicializar Productos
         if (!localStorage.getItem("sq_products")) {
             localStorage.setItem("sq_products", JSON.stringify(SEED_PRODUCTS));
