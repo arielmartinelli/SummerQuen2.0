@@ -98,6 +98,9 @@ window.views.admin = {
                         <button class="admin-nav-btn" data-tab="users">
                             <i data-lucide="users"></i> Clientes
                         </button>
+                        <button class="admin-nav-btn" data-tab="messages">
+                            <i data-lucide="mail"></i> Mensajes <span class="messages-badge" id="unreadMessagesBadge" style="background: var(--color-danger); color: white; border-radius: 10px; padding: 0.1rem 0.4rem; font-size: 0.75rem; margin-left: 0.5rem; display: none;">0</span>
+                        </button>
                     </aside>
 
                     <!-- CONTENIDO DE PESTAÑA -->
@@ -180,8 +183,8 @@ window.views.admin = {
                             </div>
                             
                             <div class="form-group">
-                                <label class="form-label" for="prodSizes">Talles (Separados por coma)</label>
-                                <input type="text" id="prodSizes" class="form-control" placeholder="S, M, L, XL">
+                                <label class="form-label" for="prodSizes">Talles (Autocalculado)</label>
+                                <input type="text" id="prodSizes" class="form-control" placeholder="Se calcula de las variantes" readonly>
                             </div>
 
                             <div style="border-top: 1px solid var(--color-border); padding-top: 1.25rem; margin-top: 1.25rem;">
@@ -207,6 +210,9 @@ window.views.admin = {
 
         // Atar eventos de navegación y cerrar sesión
         this.initAdminLayoutEvents(container);
+        
+        // Cargar badge inicial de mensajes no leídos
+        this.updateUnreadMessagesBadge();
         
         // Cargar por defecto la primera pestaña
         this.switchTab("dashboard");
@@ -245,6 +251,12 @@ window.views.admin = {
                 this.switchTab(this.activeTab);
             }
         });
+        window.state.subscribe("messages", () => {
+            this.updateUnreadMessagesBadge();
+            if (this.activeTab === "messages") {
+                this.switchTab(this.activeTab);
+            }
+        });
 
         // Eventos del Modal
         const modalOverlay = document.getElementById("productModalOverlay");
@@ -280,7 +292,7 @@ window.views.admin = {
         const variantsContainer = document.getElementById("variantsContainer");
         if (addVariantBtn && variantsContainer) {
             addVariantBtn.addEventListener("click", () => {
-                this.createVariantRow(variantsContainer, "", 0, "");
+                this.createVariantRow(variantsContainer, "", "", 0, "");
             });
         }
 
@@ -353,6 +365,16 @@ window.views.admin = {
         const tabContentEl = document.getElementById("adminTabContent");
         if (!tabContentEl) return;
 
+        // Sincronizar botones de navegación lateral
+        const navButtons = document.querySelectorAll(".admin-nav-btn");
+        navButtons.forEach(btn => {
+            if (btn.getAttribute("data-tab") === tabName) {
+                btn.classList.add("active");
+            } else {
+                btn.classList.remove("active");
+            }
+        });
+
         if (tabName === "dashboard") {
             this.renderTabDashboard(tabContentEl);
         } else if (tabName === "products") {
@@ -361,6 +383,8 @@ window.views.admin = {
             this.renderTabOrders(tabContentEl);
         } else if (tabName === "users") {
             this.renderTabUsers(tabContentEl);
+        } else if (tabName === "messages") {
+            this.renderTabMessages(tabContentEl);
         }
 
         if (window.lucide) window.lucide.createIcons();
@@ -584,7 +608,7 @@ window.views.admin = {
             const variantsContainer = document.getElementById("variantsContainer");
             if (variantsContainer) {
                 variantsContainer.innerHTML = "";
-                this.createVariantRow(variantsContainer, "", 0, "");
+                this.createVariantRow(variantsContainer, "", "", 0, "");
             }
 
             modalOverlay.classList.add("active");
@@ -609,25 +633,32 @@ window.views.admin = {
                     document.getElementById("prodMaterials").value = prod.materials || "";
                     document.getElementById("prodSizes").value = prod.sizes ? prod.sizes.join(", ") : "";
 
-                    // Cargar variantes de color
+                    // Cargar variantes de color + talle
                     const variantsContainer = document.getElementById("variantsContainer");
                     if (variantsContainer) {
                         variantsContainer.innerHTML = "";
                         if (prod.variants && prod.variants.length > 0) {
                             prod.variants.forEach(v => {
-                                this.createVariantRow(variantsContainer, v.color, v.stock, v.image);
+                                this.createVariantRow(variantsContainer, v.color, v.size || "", v.stock, v.image);
                             });
                         } else if (prod.colors && prod.colors.length > 0) {
-                            // Fallback
-                            const computedStock = Math.floor(prod.stock / prod.colors.length);
-                            prod.colors.forEach((col, idx) => {
-                                const stockForThisColor = (idx === prod.colors.length - 1)
-                                    ? prod.stock - (computedStock * (prod.colors.length - 1))
-                                    : computedStock;
-                                this.createVariantRow(variantsContainer, col, stockForThisColor, prod.image);
+                            // Fallback robusto mapeando combinaciones
+                            const fallbackSizes = (prod.sizes && prod.sizes.length > 0) ? prod.sizes : ["Único"];
+                            const totalCombinations = prod.colors.length * fallbackSizes.length;
+                            const computedStock = Math.floor(prod.stock / totalCombinations);
+                            let combIndex = 0;
+                            
+                            prod.colors.forEach(col => {
+                                fallbackSizes.forEach(sz => {
+                                    const stockForThisComb = (combIndex === totalCombinations - 1)
+                                        ? prod.stock - (computedStock * (totalCombinations - 1))
+                                        : computedStock;
+                                    this.createVariantRow(variantsContainer, col, sz, stockForThisComb, prod.image);
+                                    combIndex++;
+                                });
                             });
                         } else {
-                            this.createVariantRow(variantsContainer, "Único", prod.stock, prod.image);
+                            this.createVariantRow(variantsContainer, "Único", "Único", prod.stock, prod.image);
                         }
                     }
 
@@ -685,25 +716,31 @@ window.views.admin = {
         const onSale = document.getElementById("prodOnSale").checked;
         const base64Value = document.getElementById("prodImageBase64").value;
 
-        // Recopilar variantes de color
+        // Recopilar variantes de color + talle
         const variantRows = document.querySelectorAll(".variant-row");
         const variants = [];
         const colors = [];
+        const sizes = [];
         let computedTotalStock = 0;
 
         variantRows.forEach(row => {
             const colorInput = row.querySelector(".variant-color-input");
+            const sizeInput = row.querySelector(".variant-size-input");
             const stockInput = row.querySelector(".variant-stock-input");
             const base64Input = row.querySelector(".variant-base64-input");
 
             const color = colorInput ? colorInput.value.trim() : "";
+            const size = sizeInput ? sizeInput.value.trim() : "";
             const stock = stockInput ? parseInt(stockInput.value) || 0 : 0;
             const image = base64Input ? base64Input.value : "";
 
-            if (color) {
-                variants.push({ color, stock, image });
+            if (color && size) {
+                variants.push({ color, size, stock, image });
                 if (!colors.includes(color)) {
                     colors.push(color);
+                }
+                if (!sizes.includes(size)) {
+                    sizes.push(size);
                 }
                 computedTotalStock += stock;
             }
@@ -711,7 +748,7 @@ window.views.admin = {
 
         // Validar que haya al menos una variante de color válida
         if (variants.length === 0) {
-            window.components.showToast("Debes ingresar al menos una variante de color válida", "error");
+            window.components.showToast("Debes ingresar al menos una variante válida (con color y talle)", "error");
             return;
         }
 
@@ -745,7 +782,7 @@ window.views.admin = {
             description: document.getElementById("prodDesc").value,
             materials: document.getElementById("prodMaterials").value,
             colors: colors,
-            sizes: sizeVal ? sizeVal.split(",").map(s => s.trim()) : [],
+            sizes: sizes,
             variants: variants,
             image: mainImage,
             images: uniqueImages
@@ -986,10 +1023,10 @@ window.views.admin = {
         `;
     },
 
-    createVariantRow: function(container, color = "", stock = 0, image = "") {
+    createVariantRow: function(container, color = "", size = "", stock = 0, image = "") {
         const row = document.createElement("div");
         row.className = "variant-row";
-        row.style.cssText = "display: grid; grid-template-columns: 2.2fr 1.2fr 3.5fr auto; gap: 0.75rem; align-items: center; background-color: var(--color-bg-alt); padding: 0.6rem; border-radius: var(--border-radius-sm); border: 1px solid var(--color-border);";
+        row.style.cssText = "display: grid; grid-template-columns: 2fr 1fr 1fr 3fr auto; gap: 0.5rem; align-items: center; background-color: var(--color-bg-alt); padding: 0.6rem; border-radius: var(--border-radius-sm); border: 1px solid var(--color-border); margin-bottom: 0.25rem;";
         
         const previewStyle = image ? "display: block;" : "display: none;";
         const placeholderStyle = image ? "display: none;" : "display: flex; align-items: center; justify-content: center;";
@@ -997,20 +1034,23 @@ window.views.admin = {
 
         row.innerHTML = `
             <div>
-                <input type="text" class="form-control variant-color-input" placeholder="Color (ej: Negro)" value="${color}" required style="padding: 0.4rem 0.6rem; font-size: 0.85rem;">
+                <input type="text" class="form-control variant-color-input" placeholder="Color" value="${color}" required style="padding: 0.4rem 0.5rem; font-size: 0.8rem;">
             </div>
             <div>
-                <input type="number" class="form-control variant-stock-input" placeholder="Stock" min="0" value="${stock}" required style="padding: 0.4rem 0.6rem; font-size: 0.85rem;">
+                <input type="text" class="form-control variant-size-input" placeholder="Talle" value="${size}" required style="padding: 0.4rem 0.5rem; font-size: 0.8rem;">
             </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem; overflow: hidden;">
-                <div class="variant-img-preview-wrapper" style="width: 32px; height: 32px; border-radius: 4px; border: 1px solid var(--color-border); overflow: hidden; background: var(--color-bg); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+            <div>
+                <input type="number" class="form-control variant-stock-input" placeholder="Stock" min="0" value="${stock}" required style="padding: 0.4rem 0.5rem; font-size: 0.8rem;">
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.4rem; overflow: hidden;">
+                <div class="variant-img-preview-wrapper" style="width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--color-border); overflow: hidden; background: var(--color-bg); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
                     <img class="variant-img-preview" ${srcAttr} style="width: 100%; height: 100%; object-fit: cover; ${previewStyle}">
-                    <span class="variant-img-placeholder" style="font-size: 0.6rem; color: var(--color-text-muted); font-weight: 500; ${placeholderStyle}">No</span>
+                    <span class="variant-img-placeholder" style="font-size: 0.55rem; color: var(--color-text-muted); font-weight: 500; ${placeholderStyle}">No</span>
                 </div>
-                <input type="file" class="variant-file-input" accept="image/*" style="font-size: 0.75rem; cursor: pointer; flex-grow: 1; max-width: 150px;">
+                <input type="file" class="variant-file-input" accept="image/*" style="font-size: 0.7rem; cursor: pointer; flex-grow: 1; max-width: 120px;">
                 <input type="hidden" class="variant-base64-input" value="${image}">
             </div>
-            <button type="button" class="btn btn-danger btn-sm remove-variant-btn" style="padding: 0.35rem; border-radius: var(--border-radius-sm); display: flex; align-items: center; justify-content: center;" title="Eliminar Variante">
+            <button type="button" class="btn btn-danger btn-sm remove-variant-btn" style="padding: 0.3rem; border-radius: var(--border-radius-sm); display: flex; align-items: center; justify-content: center;" title="Eliminar Variante">
                 <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
             </button>
         `;
@@ -1025,12 +1065,19 @@ window.views.admin = {
         const base64Input = row.querySelector(".variant-base64-input");
         const imgPreview = row.querySelector(".variant-img-preview");
         const placeholder = row.querySelector(".variant-img-placeholder");
+        const sizeInput = row.querySelector(".variant-size-input");
         const stockInput = row.querySelector(".variant-stock-input");
         const removeBtn = row.querySelector(".remove-variant-btn");
 
         stockInput.addEventListener("input", () => {
-            this.recalculateTotalStock();
+            this.recalculateTotalStockAndSizes();
         });
+
+        if (sizeInput) {
+            sizeInput.addEventListener("input", () => {
+                this.recalculateTotalStockAndSizes();
+            });
+        }
 
         fileInput.addEventListener("change", (e) => {
             const file = e.target.files[0];
@@ -1068,21 +1115,229 @@ window.views.admin = {
 
         removeBtn.addEventListener("click", () => {
             row.remove();
-            this.recalculateTotalStock();
+            this.recalculateTotalStockAndSizes();
             window.components.showToast("Variante eliminada", "info");
         });
     },
 
-    recalculateTotalStock: function() {
+    recalculateTotalStockAndSizes: function() {
         const stockInputs = document.querySelectorAll(".variant-stock-input");
+        const sizeInputs = document.querySelectorAll(".variant-size-input");
+        
         let total = 0;
         stockInputs.forEach(input => {
-            const val = parseInt(input.value) || 0;
-            total += val;
+            total += parseInt(input.value) || 0;
         });
+
+        const uniqueSizes = [];
+        sizeInputs.forEach(input => {
+            const val = input.value.trim();
+            if (val && !uniqueSizes.includes(val)) {
+                uniqueSizes.push(val);
+            }
+        });
+
         const prodStockInput = document.getElementById("prodStock");
         if (prodStockInput) {
             prodStockInput.value = total;
         }
+
+        const prodSizesInput = document.getElementById("prodSizes");
+        if (prodSizesInput) {
+            prodSizesInput.value = uniqueSizes.join(", ");
+        }
+    },
+
+    updateUnreadMessagesBadge: function() {
+        const badge = document.getElementById("unreadMessagesBadge");
+        if (badge) {
+            const count = window.state.getUnreadMessagesCount();
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = "inline-block";
+            } else {
+                badge.style.display = "none";
+            }
+        }
+    },
+
+    renderTabMessages: function(element) {
+        const messages = window.state.getMessages();
+        const settings = window.state.getContactSettings() || { email: "consultas@summerqueen.com", whatsapp: "5491122334455" };
+
+        const configHtml = `
+            <div class="admin-table-container" style="margin-bottom: 2rem; padding: 1.5rem; background-color: var(--color-card); border-radius: var(--border-radius-lg); border: 1px solid var(--color-border);">
+                <h3 style="font-family: var(--font-heading); font-size: 1.3rem; margin-bottom: 1rem; color: var(--color-primary); display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="settings" style="width: 20px; height: 20px;"></i> Configuración de Canales de Contacto
+                </h3>
+                <form id="contactSettingsForm" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: flex-end;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" for="settingsEmail" style="font-size: 0.85rem; font-weight: 600;">Email de Destino</label>
+                        <input type="email" id="settingsEmail" class="form-control" value="${settings.email}" required style="padding: 0.5rem 0.75rem;">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" for="settingsWhatsapp" style="font-size: 0.85rem; font-weight: 600;">Teléfono WhatsApp (Sin +, con código de país)</label>
+                        <input type="text" id="settingsWhatsapp" class="form-control" value="${settings.whatsapp}" required placeholder="5491122334455" style="padding: 0.5rem 0.75rem;">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm" style="padding: 0.6rem 1.2rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+                        <i data-lucide="save" style="width: 16px; height: 16px;"></i> Guardar
+                    </button>
+                </form>
+            </div>
+        `;
+
+        let tableRowsHtml = "";
+        if (messages.length === 0) {
+            tableRowsHtml = `<tr><td colspan="5" style="text-align: center; color: var(--color-text-muted); padding: 3rem;">El buzón de entrada está vacío.</td></tr>`;
+        } else {
+            const sortedMessages = [...messages].sort((a, b) => new Date(b.date) - new Date(a.date));
+            sortedMessages.forEach(m => {
+                const msgDate = new Date(m.date).toLocaleDateString('es-AR', {
+                    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+                const subjectLabel = m.subject === "egresados" ? "Buzos Egresados" : m.subject === "mochilas" ? "Mochilas" : m.subject === "pedido" ? "Pedidos" : "Alianzas/Taller";
+                
+                tableRowsHtml += `
+                    <tr style="${m.read ? '' : 'font-weight: 700; background-color: rgba(230, 126, 34, 0.05);'}">
+                        <td>
+                            ${m.read ? '<span style="color:var(--color-text-muted); font-size: 0.85rem;">Leído</span>' : '<span style="color:var(--color-primary); font-size: 0.85rem; font-weight: 700;">🆕 Nuevo</span>'}
+                        </td>
+                        <td>
+                            <strong>${m.name}</strong>
+                            <div style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 400;">${m.email}</div>
+                        </td>
+                        <td class="hide-mobile"><span class="status-badge" style="background-color: var(--color-bg-alt); color: var(--color-text-primary); font-size: 0.75rem;">${subjectLabel}</span></td>
+                        <td class="hide-mobile" style="font-size: 0.85rem; color: var(--color-text-muted); font-weight: 400;">${msgDate} hs.</td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-outline btn-sm view-msg-btn" data-id="${m.id}" style="padding: 0.4rem 0.6rem;" title="Leer Mensaje">
+                                    <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                                </button>
+                                <button class="btn btn-danger btn-sm delete-msg-btn" data-id="${m.id}" style="padding: 0.4rem 0.6rem;" title="Eliminar">
+                                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        const inboxHtml = `
+            <div class="admin-table-container">
+                <div class="admin-table-header">
+                    <h3>Buzón de Entrada</h3>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 90px;">Estado</th>
+                                <th>Remitente</th>
+                                <th class="hide-mobile">Asunto</th>
+                                <th class="hide-mobile">Fecha</th>
+                                <th style="width: 100px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MODAL LECTURA DE MENSAJE (OCULTO) -->
+            <div class="admin-modal-overlay" id="messageModalOverlay" style="z-index: 1000;">
+                <div class="admin-modal" style="width: 500px;">
+                    <div class="admin-modal-header">
+                        <h3>Detalle del Mensaje</h3>
+                        <button class="icon-btn" id="closeMessageModalBtn">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                    <div class="admin-modal-body" id="messageModalBody">
+                        <!-- Carga dinámica -->
+                    </div>
+                    <div class="admin-modal-footer">
+                        <button class="btn btn-primary btn-sm" id="confirmMessageModalBtn">Aceptar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        element.innerHTML = configHtml + inboxHtml;
+        this.initMessagesTabEvents();
+    },
+
+    initMessagesTabEvents: function() {
+        const settingsForm = document.getElementById("contactSettingsForm");
+        if (settingsForm) {
+            settingsForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const email = document.getElementById("settingsEmail").value;
+                const whatsapp = document.getElementById("settingsWhatsapp").value;
+
+                window.state.updateContactSettings(email, whatsapp);
+                window.components.showToast("Configuración de contacto guardada", "success");
+            });
+        }
+
+        const viewButtons = document.querySelectorAll(".view-msg-btn");
+        const deleteButtons = document.querySelectorAll(".delete-msg-btn");
+        
+        const modalOverlay = document.getElementById("messageModalOverlay");
+        const modalBody = document.getElementById("messageModalBody");
+        const closeBtn = document.getElementById("closeMessageModalBtn");
+        const confirmBtn = document.getElementById("confirmMessageModalBtn");
+
+        viewButtons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const id = btn.getAttribute("data-id");
+                const messages = window.state.getMessages();
+                const msg = messages.find(m => m.id === id);
+
+                if (msg) {
+                    window.state.markMessageAsRead(id);
+                    this.updateUnreadMessagesBadge();
+
+                    const msgDate = new Date(msg.date).toLocaleString('es-AR');
+                    const subjectLabel = msg.subject === "egresados" ? "Buzos Egresados" : msg.subject === "mochilas" ? "Mochilas" : msg.subject === "pedido" ? "Pedidos" : "Alianzas/Taller";
+                    
+                    modalBody.innerHTML = `
+                        <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); padding-bottom: 1rem;">
+                            <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>De:</strong> ${msg.name} (&lt;${msg.email}&gt;)</p>
+                            <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Fecha:</strong> ${msgDate} hs.</p>
+                            <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Asunto:</strong> ${subjectLabel}</p>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom: 0.5rem; font-size: 1rem; color: var(--color-primary);">Consulta:</h4>
+                            <div style="background: var(--color-bg-alt); padding: 1rem; border-radius: var(--border-radius-sm); border: 1px solid var(--color-border); white-space: pre-wrap; font-size: 0.95rem; line-height: 1.5; text-align: left;">${msg.message}</div>
+                        </div>
+                    `;
+
+                    modalOverlay.classList.add("active");
+                }
+            });
+        });
+
+        deleteButtons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const id = btn.getAttribute("data-id");
+                if (confirm("¿Estás seguro de que deseas eliminar este mensaje?")) {
+                    window.state.deleteMessage(id);
+                    window.components.showToast("Mensaje eliminado", "success");
+                    this.switchTab("messages");
+                }
+            });
+        });
+
+        const hideModal = () => {
+            modalOverlay.classList.remove("active");
+            this.switchTab("messages");
+        };
+
+        if (closeBtn) closeBtn.addEventListener("click", hideModal);
+        if (confirmBtn) confirmBtn.addEventListener("click", hideModal);
+        if (window.lucide) window.lucide.createIcons();
     }
 };

@@ -16,8 +16,12 @@ window.views.product = {
         }
 
         const initialColor = product.colors && product.colors.length > 0 ? product.colors[0] : "";
+        const initialSize = product.sizes && product.sizes.length > 0 ? product.sizes[0] : "";
         const initialVariant = (product.variants && product.variants.length > 0)
-            ? product.variants.find(v => v.color.toLowerCase() === initialColor.toLowerCase())
+            ? product.variants.find(v => 
+                v.color.toLowerCase() === initialColor.toLowerCase() && 
+                (v.size || "").toLowerCase() === initialSize.toLowerCase()
+              )
             : null;
         const initialStock = initialVariant ? initialVariant.stock : product.stock;
 
@@ -25,7 +29,7 @@ window.views.product = {
         this.selectedConfig = {
             productId: product.id,
             color: initialColor,
-            size: product.sizes && product.sizes.length > 0 ? product.sizes[0] : "",
+            size: initialSize,
             quantity: initialStock > 0 ? 1 : 0
         };
 
@@ -61,10 +65,10 @@ window.views.product = {
         // Estilos para galería
         const mainImage = (initialVariant && initialVariant.image) ? initialVariant.image : product.image;
         
-        // Reunir todas las imágenes de variantes para la galería de miniaturas
+        // Reunir todas las imágenes únicas de variantes para la galería de miniaturas
         let allImages = [];
         if (product.variants && product.variants.length > 0) {
-            allImages = product.variants.map(v => v.image).filter(Boolean);
+            allImages = [...new Set(product.variants.map(v => v.image).filter(Boolean))];
         }
         if (allImages.length === 0) {
             allImages = product.images || [mainImage];
@@ -224,6 +228,7 @@ window.views.product = {
                 sizeButtons.forEach(b => b.classList.remove("active"));
                 btn.classList.add("active");
                 this.selectedConfig.size = btn.getAttribute("data-value");
+                this.updateSelectedVariant(product);
             });
         });
 
@@ -232,49 +237,8 @@ window.views.product = {
             btn.addEventListener("click", () => {
                 colorButtons.forEach(b => b.classList.remove("active"));
                 btn.classList.add("active");
-                
-                const selectedColor = btn.getAttribute("data-value");
-                this.selectedConfig.color = selectedColor;
-
-                // Si el producto tiene variantes por color, actualizar imagen y stock en tiempo real
-                if (product.variants && product.variants.length > 0) {
-                    const variant = product.variants.find(v => v.color.toLowerCase() === selectedColor.toLowerCase());
-                    if (variant) {
-                        // Cambiar la foto principal por la foto de ese color
-                        if (variant.image) {
-                            mainImageEl.src = variant.image;
-                            
-                            // Marcar miniatura correspondiente como activa en la galería
-                            thumbnails.forEach(t => {
-                                if (t.getAttribute("data-src") === variant.image) {
-                                    t.classList.add("active");
-                                } else {
-                                    t.classList.remove("active");
-                                }
-                            });
-                        }
-
-                        // Actualizar el stock disponible en pantalla
-                        const stockLabelEl = document.getElementById("variantStockLabel");
-                        if (stockLabelEl) {
-                            if (variant.stock > 0) {
-                                stockLabelEl.innerHTML = `Stock disponible: <strong>${variant.stock}</strong> unidades`;
-                                addBtn.disabled = false;
-                                addBtn.innerHTML = `<i data-lucide="shopping-bag"></i> Agregar al Carrito`;
-                            } else {
-                                stockLabelEl.innerHTML = `<strong style="color: var(--color-danger);">Agotado en este color</strong>`;
-                                addBtn.disabled = true;
-                                addBtn.innerHTML = `Sin Stock en este color`;
-                            }
-                        }
-                        
-                        // Reajustar cantidad a 1 (o 0 si no hay stock)
-                        qtyVal.value = variant.stock > 0 ? "1" : "0";
-                        this.selectedConfig.quantity = variant.stock > 0 ? 1 : 0;
-                    }
-                }
-                
-                if (window.lucide) window.lucide.createIcons();
+                this.selectedConfig.color = btn.getAttribute("data-value");
+                this.updateSelectedVariant(product);
             });
         });
 
@@ -291,10 +255,14 @@ window.views.product = {
         qtyPlus.addEventListener("click", () => {
             let current = parseInt(qtyVal.value);
             
-            // Buscar stock límite de la variante de color activa
+            // Buscar stock límite de la variante de color y talle activa
             const activeColor = this.selectedConfig.color;
+            const activeSize = this.selectedConfig.size;
             const variant = (product.variants && product.variants.length > 0)
-                ? product.variants.find(v => v.color.toLowerCase() === activeColor.toLowerCase())
+                ? product.variants.find(v => 
+                    v.color.toLowerCase() === activeColor.toLowerCase() && 
+                    (v.size || "").toLowerCase() === activeSize.toLowerCase()
+                  )
                 : null;
             const maxStock = variant ? variant.stock : product.stock;
 
@@ -302,7 +270,7 @@ window.views.product = {
                 qtyVal.value = current + 1;
                 this.selectedConfig.quantity = current + 1;
             } else {
-                window.components.showToast("Límite de stock disponible para este color", "info");
+                window.components.showToast("Límite de stock disponible para esta combinación", "info");
             }
         });
 
@@ -319,6 +287,97 @@ window.views.product = {
                 window.components.renderCartDrawer();
             }
         });
+    },
+
+    updateSelectedVariant: function(product) {
+        const mainImageEl = document.getElementById("productMainImage");
+        const thumbnails = document.querySelectorAll(".thumbnail-item");
+        const qtyVal = document.getElementById("prodQtyVal");
+        const addBtn = document.getElementById("addToCartMainBtn");
+        const stockLabelEl = document.getElementById("variantStockLabel");
+
+        const selectedColor = this.selectedConfig.color;
+        const selectedSize = this.selectedConfig.size;
+
+        if (product.variants && product.variants.length > 0) {
+            // Buscar la variante específica para color + talle
+            const variant = product.variants.find(v => 
+                v.color.toLowerCase() === selectedColor.toLowerCase() && 
+                (v.size || "").toLowerCase() === selectedSize.toLowerCase()
+            );
+
+            if (variant) {
+                // Actualizar imagen principal si la variante tiene
+                if (variant.image) {
+                    mainImageEl.src = variant.image;
+                    thumbnails.forEach(t => {
+                        if (t.getAttribute("data-src") === variant.image) {
+                            t.classList.add("active");
+                        } else {
+                            t.classList.remove("active");
+                        }
+                    });
+                } else {
+                    // Fallback a cualquier imagen del mismo color que tenga foto
+                    const fallbackColorVariant = product.variants.find(v => 
+                        v.color.toLowerCase() === selectedColor.toLowerCase() && v.image
+                    );
+                    if (fallbackColorVariant) {
+                        mainImageEl.src = fallbackColorVariant.image;
+                        thumbnails.forEach(t => {
+                            if (t.getAttribute("data-src") === fallbackColorVariant.image) {
+                                t.classList.add("active");
+                            } else {
+                                t.classList.remove("active");
+                            }
+                        });
+                    }
+                }
+
+                // Actualizar stock
+                if (stockLabelEl) {
+                    if (variant.stock > 0) {
+                        stockLabelEl.innerHTML = `Stock disponible: <strong>${variant.stock}</strong> unidades`;
+                        addBtn.disabled = false;
+                        addBtn.innerHTML = `<i data-lucide="shopping-bag"></i> Agregar al Carrito`;
+                    } else {
+                        stockLabelEl.innerHTML = `<strong style="color: var(--color-danger);">Agotado en esta combinación</strong>`;
+                        addBtn.disabled = true;
+                        addBtn.innerHTML = `Sin Stock en esta combinación`;
+                    }
+                }
+
+                // Ajustar input de cantidad
+                qtyVal.value = variant.stock > 0 ? "1" : "0";
+                this.selectedConfig.quantity = variant.stock > 0 ? 1 : 0;
+            } else {
+                // Combinación color + talle no fabricada
+                if (stockLabelEl) {
+                    stockLabelEl.innerHTML = `<strong style="color: var(--color-danger);">Combinación no disponible</strong>`;
+                }
+                addBtn.disabled = true;
+                addBtn.innerHTML = `No disponible`;
+                qtyVal.value = "0";
+                this.selectedConfig.quantity = 0;
+            }
+        } else {
+            // Producto común
+            if (stockLabelEl) {
+                if (product.stock > 0) {
+                    stockLabelEl.innerHTML = `Stock disponible: <strong>${product.stock}</strong> unidades`;
+                    addBtn.disabled = false;
+                    addBtn.innerHTML = `<i data-lucide="shopping-bag"></i> Agregar al Carrito`;
+                } else {
+                    stockLabelEl.innerHTML = `<strong style="color: var(--color-danger);">Agotado</strong>`;
+                    addBtn.disabled = true;
+                    addBtn.innerHTML = `Sin Stock`;
+                }
+            }
+            qtyVal.value = product.stock > 0 ? "1" : "0";
+            this.selectedConfig.quantity = product.stock > 0 ? 1 : 0;
+        }
+
+        if (window.lucide) window.lucide.createIcons();
     },
 
     renderError: function(container) {

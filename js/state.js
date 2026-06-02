@@ -48,7 +48,7 @@ const SEED_PRODUCTS = [
         price: 28500,
         onSale: true,
         salePrice: 22800,
-        description: "Buzo de algodón con friza premium. Diseño espacial bordado con hilos metálicos importados. Capucha forrada, puños reforzados y estampado personalizado con nombre en espalda.",
+        description: "Buzo de algodón con friza premium. Diseño espacial bordado con hilos metálicos importados. Capucha forrada, puños reflex y estampado personalizado con nombre en espalda.",
         materials: "80% Algodón Rústico, 20% Poliéster",
         sizes: ["S", "M", "L", "XL", "XXL"],
         colors: ["Azul Marino", "Negro Carbono", "Borgoña"],
@@ -61,9 +61,12 @@ const SEED_PRODUCTS = [
             generateMockSvg("egresados", "Buzo Universe - Textura", "#60a5fa")
         ],
         variants: [
-            { color: "Azul Marino", stock: 20, image: generateMockSvg("egresados", "Buzo Universe - Azul", "#1e3a8a") },
-            { color: "Negro Carbono", stock: 15, image: generateMockSvg("egresados", "Buzo Universe - Negro", "#111827") },
-            { color: "Borgoña", stock: 10, image: generateMockSvg("egresados", "Buzo Universe - Borgoña", "#881337") }
+            { color: "Azul Marino", size: "M", stock: 10, image: generateMockSvg("egresados", "Buzo Universe - Azul", "#1e3a8a") },
+            { color: "Azul Marino", size: "L", stock: 10, image: generateMockSvg("egresados", "Buzo Universe - Azul", "#1e3a8a") },
+            { color: "Negro Carbono", size: "S", stock: 5, image: generateMockSvg("egresados", "Buzo Universe - Negro", "#111827") },
+            { color: "Negro Carbono", size: "M", stock: 10, image: generateMockSvg("egresados", "Buzo Universe - Negro", "#111827") },
+            { color: "Borgoña", size: "L", stock: 5, image: generateMockSvg("egresados", "Buzo Universe - Borgoña", "#881337") },
+            { color: "Borgoña", size: "XL", stock: 5, image: generateMockSvg("egresados", "Buzo Universe - Borgoña", "#881337") }
         ]
     },
     {
@@ -85,9 +88,9 @@ const SEED_PRODUCTS = [
             generateMockSvg("egresados", "Campera Varsity - Detalle Bordado", "#991b1b")
         ],
         variants: [
-            { color: "Rojo/Blanco", stock: 10, image: generateMockSvg("egresados", "Varsity - Rojo/Blanco", "#b91c1c") },
-            { color: "Negro/Blanco", stock: 10, image: generateMockSvg("egresados", "Varsity - Negro/Blanco", "#1f2937") },
-            { color: "Verde/Blanco", stock: 10, image: generateMockSvg("egresados", "Varsity - Verde/Blanco", "#065f46") }
+            { color: "Rojo/Blanco", size: "M", stock: 10, image: generateMockSvg("egresados", "Varsity - Rojo/Blanco", "#b91c1c") },
+            { color: "Negro/Blanco", size: "L", stock: 10, image: generateMockSvg("egresados", "Varsity - Negro/Blanco", "#1f2937") },
+            { color: "Verde/Blanco", size: "S", stock: 10, image: generateMockSvg("egresados", "Varsity - Verde/Blanco", "#065f46") }
         ]
     },
     {
@@ -106,9 +109,9 @@ const SEED_PRODUCTS = [
         image: generateMockSvg("egresados", "Chomba Vintage", "#10b981"),
         images: [generateMockSvg("egresados", "Chomba Vintage", "#10b981")],
         variants: [
-            { color: "Gris Melange", stock: 20, image: generateMockSvg("egresados", "Chomba - Gris", "#4b5563") },
-            { color: "Blanco Óptico", stock: 20, image: generateMockSvg("egresados", "Chomba - Blanco", "#f9fafb") },
-            { color: "Azul Francia", stock: 20, image: generateMockSvg("egresados", "Chomba - Azul", "#2563eb") }
+            { color: "Gris Melange", size: "S", stock: 20, image: generateMockSvg("egresados", "Chomba - Gris", "#4b5563") },
+            { color: "Blanco Óptico", size: "M", stock: 20, image: generateMockSvg("egresados", "Chomba - Blanco", "#f9fafb") },
+            { color: "Azul Francia", size: "L", stock: 20, image: generateMockSvg("egresados", "Chomba - Azul", "#2563eb") }
         ]
     },
     {
@@ -131,9 +134,10 @@ const SEED_PRODUCTS = [
             generateMockSvg("mochilas", "Mochila Urban Tech - Puesta", "#fef08a")
         ],
         variants: [
-            { color: "Negro Mate", stock: 10, image: generateMockSvg("mochilas", "Urban Tech - Negro", "#111827") },
-            { color: "Gris Asfalto", stock: 10, image: generateMockSvg("mochilas", "Urban Tech - Gris", "#374151") },
-            { color: "Mostaza", stock: 5, image: generateMockSvg("mochilas", "Urban Tech - Mostaza", "#d97706") }
+            { color: "Negro Mate", size: "20L", stock: 5, image: generateMockSvg("mochilas", "Urban Tech - Negro", "#111827") },
+            { color: "Negro Mate", size: "25L", stock: 5, image: generateMockSvg("mochilas", "Urban Tech - Negro", "#111827") },
+            { color: "Gris Asfalto", size: "20L", stock: 10, image: generateMockSvg("mochilas", "Urban Tech - Gris", "#374151") },
+            { color: "Mostaza", size: "25L", stock: 5, image: generateMockSvg("mochilas", "Urban Tech - Mostaza", "#d97706") }
         ]
     },
     {
@@ -152,9 +156,9 @@ const SEED_PRODUCTS = [
         image: generateMockSvg("mochilas", "Mochila Canvas", "#84cc16"),
         images: [generateMockSvg("mochilas", "Mochila Canvas", "#84cc16")],
         variants: [
-            { color: "Beige Arena", stock: 8, image: generateMockSvg("mochilas", "Canvas - Beige", "#f5f5dc") },
-            { color: "Verde Oliva", stock: 7, image: generateMockSvg("mochilas", "Canvas - Verde", "#3f6212") },
-            { color: "Azul Denim", stock: 5, image: generateMockSvg("mochilas", "Canvas - Denim", "#1e3a8a") }
+            { color: "Beige Arena", size: "18L", stock: 8, image: generateMockSvg("mochilas", "Canvas - Beige", "#f5f5dc") },
+            { color: "Verde Oliva", size: "18L", stock: 7, image: generateMockSvg("mochilas", "Canvas - Verde", "#3f6212") },
+            { color: "Azul Denim", size: "18L", stock: 5, image: generateMockSvg("mochilas", "Canvas - Denim", "#1e3a8a") }
         ]
     },
     {
@@ -173,9 +177,9 @@ const SEED_PRODUCTS = [
         image: generateMockSvg("accesorios", "Snapback Cap", "#a855f7"),
         images: [generateMockSvg("accesorios", "Snapback Cap", "#a855f7")],
         variants: [
-            { color: "Negro", stock: 20, image: generateMockSvg("accesorios", "Snapback - Negro", "#111827") },
-            { color: "Borgoña", stock: 15, image: generateMockSvg("accesorios", "Snapback - Borgoña", "#881337") },
-            { color: "Verde Militar", stock: 15, image: generateMockSvg("accesorios", "Snapback - Verde", "#3f6212") }
+            { color: "Negro", size: "Talle Único Ajustable", stock: 20, image: generateMockSvg("accesorios", "Snapback - Negro", "#111827") },
+            { color: "Borgoña", size: "Talle Único Ajustable", stock: 15, image: generateMockSvg("accesorios", "Snapback - Borgoña", "#881337") },
+            { color: "Verde Militar", size: "Talle Único Ajustable", stock: 15, image: generateMockSvg("accesorios", "Snapback - Verde", "#3f6212") }
         ]
     },
     {
@@ -194,8 +198,9 @@ const SEED_PRODUCTS = [
         image: generateMockSvg("accesorios", "Piluso Reversible", "#ec4899"),
         images: [generateMockSvg("accesorios", "Piluso Reversible", "#ec4899")],
         variants: [
-            { color: "Camo/Negro", stock: 20, image: generateMockSvg("accesorios", "Piluso - Camo", "#14532d") },
-            { color: "Amarillo/Negro", stock: 15, image: generateMockSvg("accesorios", "Piluso - Amarillo", "#ca8a04") }
+            { color: "Camo/Negro", size: "M (57cm)", stock: 10, image: generateMockSvg("accesorios", "Piluso - Camo", "#14532d") },
+            { color: "Camo/Negro", size: "L (59cm)", stock: 10, image: generateMockSvg("accesorios", "Piluso - Camo", "#14532d") },
+            { color: "Amarillo/Negro", size: "M (57cm)", stock: 15, image: generateMockSvg("accesorios", "Piluso - Amarillo", "#ca8a04") }
         ]
     },
     {
@@ -214,9 +219,9 @@ const SEED_PRODUCTS = [
         image: generateMockSvg("accesorios", "Cartuchera Rolla", "#06b6d4"),
         images: [generateMockSvg("accesorios", "Cartuchera Rolla", "#06b6d4")],
         variants: [
-            { color: "Kaki", stock: 15, image: generateMockSvg("accesorios", "Cartuchera - Kaki", "#c2a278") },
-            { color: "Denim", stock: 15, image: generateMockSvg("accesorios", "Cartuchera - Denim", "#3b82f6") },
-            { color: "Ocre", stock: 10, image: generateMockSvg("accesorios", "Cartuchera - Ocre", "#b45309") }
+            { color: "Kaki", size: "Talle Único", stock: 15, image: generateMockSvg("accesorios", "Cartuchera - Kaki", "#c2a278") },
+            { color: "Denim", size: "Talle Único", stock: 15, image: generateMockSvg("accesorios", "Cartuchera - Denim", "#3b82f6") },
+            { color: "Ocre", size: "Talle Único", stock: 10, image: generateMockSvg("accesorios", "Cartuchera - Ocre", "#b45309") }
         ]
     }
 ];
@@ -307,10 +312,10 @@ class StateManager {
     }
 
     initDatabase() {
-        // Auto-limpieza y actualización de base de datos para la versión 3 (variantes de color)
-        if (!localStorage.getItem("sq_db_version_3")) {
+        // Auto-limpieza y actualización de base de datos para la versión 4 (variantes de color y talle + mensajería)
+        if (!localStorage.getItem("sq_db_version_4")) {
             localStorage.clear();
-            localStorage.setItem("sq_db_version_3", "true");
+            localStorage.setItem("sq_db_version_4", "true");
         }
 
         // Inicializar Productos
@@ -332,6 +337,40 @@ class StateManager {
         // Inicializar Sesión activa
         if (!localStorage.getItem("sq_session")) {
             localStorage.setItem("sq_session", JSON.stringify(null));
+        }
+        // Inicializar Configuración de Contacto
+        if (!localStorage.getItem("sq_settings")) {
+            const defaultSettings = {
+                email: "consultas@summerqueen.com",
+                whatsapp: "5491122334455"
+            };
+            localStorage.setItem("sq_settings", JSON.stringify(defaultSettings));
+        }
+        // Inicializar Mensajes de Contacto
+        if (!localStorage.getItem("sq_messages")) {
+            const SEED_MESSAGES = [
+                {
+                    id: "msg-1",
+                    name: "Carla Mendez",
+                    email: "carla.m@gmail.com",
+                    phone: "+54 9 11 5566-7788",
+                    subject: "egresados",
+                    message: "Hola! Quería consultar por un presupuesto para buzos de egresados de división A, seríamos unos 25 chicos. ¿Qué modelos tienen disponibles?",
+                    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                    read: false
+                },
+                {
+                    id: "msg-2",
+                    name: "Marcos Diaz",
+                    email: "marcos.diaz@outlook.com",
+                    phone: "+54 9 341 4433-2211",
+                    subject: "mochilas",
+                    message: "Hola, estoy interesado en la Mochila Urban Tech Rolltop en color Mostaza. ¿Cuándo vuelven a tener stock en talle 25L?",
+                    date: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+                    read: true
+                }
+            ];
+            localStorage.setItem("sq_messages", JSON.stringify(SEED_MESSAGES));
         }
         
         // Cupones de descuento en memoria
@@ -427,9 +466,12 @@ class StateManager {
         const product = this.getProductById(productId);
         if (!product) return false;
 
-        // Obtener variante del color correspondiente para validar stock
+        // Obtener variante correspondiente para validar stock (por color y talle)
         const variant = (product.variants && product.variants.length > 0)
-            ? product.variants.find(v => v.color.toLowerCase() === color.toLowerCase())
+            ? product.variants.find(v => 
+                v.color.toLowerCase() === color.toLowerCase() && 
+                (v.size || "").toLowerCase() === size.toLowerCase()
+              )
             : null;
         
         const availableStock = variant ? variant.stock : product.stock;
@@ -443,7 +485,7 @@ class StateManager {
 
         const currentQty = existingItem ? existingItem.quantity : 0;
         if (currentQty + parseInt(qty) > availableStock) {
-            window.components.showToast(`Stock insuficiente. Solo quedan ${availableStock} unidades del color ${color}.`, "error");
+            window.components.showToast(`Stock insuficiente. Solo quedan ${availableStock} unidades del color ${color} en talle ${size}.`, "error");
             return false;
         }
 
@@ -571,7 +613,10 @@ class StateManager {
             const product = products.find(p => p.id === orderItem.productId);
             if (product) {
                 if (product.variants && product.variants.length > 0) {
-                    const variant = product.variants.find(v => v.color.toLowerCase() === orderItem.color.toLowerCase());
+                    const variant = product.variants.find(v => 
+                        v.color.toLowerCase() === orderItem.color.toLowerCase() && 
+                        (v.size || "").toLowerCase() === (orderItem.size || "").toLowerCase()
+                    );
                     if (variant) {
                         variant.stock = Math.max(0, variant.stock - orderItem.quantity);
                     }
@@ -731,6 +776,72 @@ class StateManager {
             topProducts: sortedProducts.slice(0, 5),
             dailySales: Object.entries(dailySales).map(([date, amount]) => ({ date, amount }))
         };
+    }
+
+    // --- CONFIGURACION DE CONTACTO (EMAIL & WHATSAPP) ---
+    getContactSettings() {
+        return JSON.parse(localStorage.getItem("sq_settings"));
+    }
+
+    updateContactSettings(email, whatsapp) {
+        const settings = {
+            email: email.trim().toLowerCase(),
+            whatsapp: whatsapp.trim().replace(/[^0-9]/g, "") // Limpiar caracteres no numéricos
+        };
+        localStorage.setItem("sq_settings", JSON.stringify(settings));
+        this.notifyChange("settings");
+        return true;
+    }
+
+    // --- MENSAJES DE CONTACTO ---
+    getMessages() {
+        return JSON.parse(localStorage.getItem("sq_messages")) || [];
+    }
+
+    addMessage(msg) {
+        const messages = this.getMessages();
+        const newMessage = {
+            id: "msg-" + Date.now(),
+            name: msg.name.trim(),
+            email: msg.email.trim().toLowerCase(),
+            phone: msg.phone ? msg.phone.trim() : "",
+            subject: msg.subject,
+            message: msg.message.trim(),
+            date: new Date().toISOString(),
+            read: false
+        };
+        messages.push(newMessage);
+        localStorage.setItem("sq_messages", JSON.stringify(messages));
+        this.notifyChange("messages");
+        return newMessage;
+    }
+
+    markMessageAsRead(id) {
+        const messages = this.getMessages();
+        const msg = messages.find(m => m.id === id);
+        if (msg) {
+            msg.read = true;
+            localStorage.setItem("sq_messages", JSON.stringify(messages));
+            this.notifyChange("messages");
+            return true;
+        }
+        return false;
+    }
+
+    deleteMessage(id) {
+        const messages = this.getMessages();
+        const filtered = messages.filter(m => m.id !== id);
+        if (filtered.length !== messages.length) {
+            localStorage.setItem("sq_messages", JSON.stringify(filtered));
+            this.notifyChange("messages");
+            return true;
+        }
+        return false;
+    }
+
+    getUnreadMessagesCount() {
+        const messages = this.getMessages();
+        return messages.filter(m => !m.read).length;
     }
 
     // --- EVENT SYSTEM (Sencillo Pub/Sub para actualizar UI al instante) ---
