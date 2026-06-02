@@ -1,5 +1,5 @@
 /**
- * SUMMERQUEN - COMPONENTS & UI UTILITIES
+ * SUMMER QUEEN - COMPONENTS & UI UTILITIES
  * Contiene el registro de vistas globales y componentes dinámicos compartidos.
  */
 

@@ -1,5 +1,5 @@
 /**
- * SUMMERQUEN - STATE MANAGEMENT & DATA LAYER
+ * SUMMER QUEEN - STATE MANAGEMENT & DATA LAYER
  * Emula una base de datos local usando localStorage con datos precargados.
  */
 
@@ -127,7 +127,7 @@ const SEED_PRODUCTS = [
         title: "Gorra Snapback Premium",
         category: "accesorios",
         price: 5500,
-        description: "Gorra ajustable de 6 paneles con visera plana. Estructura frontal rígida y logo bordado 3D SummerQuen. Cierre snapback de plástico de alta resistencia.",
+        description: "Gorra ajustable de 6 paneles con visera plana. Estructura frontal rígida y logo bordado 3D Summer Queen. Cierre snapback de plástico de alta resistencia.",
         materials: "80% Acrílico, 20% Lana",
         sizes: ["Talle Único Ajustable"],
         colors: ["Negro", "Borgoña", "Verde Militar"],
@@ -168,8 +168,8 @@ const SEED_PRODUCTS = [
 
 const SEED_USERS = [
     {
-        email: "admin@summerquen.com",
-        name: "Admin SummerQuen",
+        email: "admin@summerqueen.com",
+        name: "Admin Summer Queen",
         password: "admin123", // En producción real, encriptado
         role: "admin",
         registeredAt: "2026-01-10T12:00:00Z"

@@ -1,5 +1,5 @@
 /**
- * SUMMERQUEN - VISTA INICIO (HOME)
+ * SUMMER QUEEN - VISTA INICIO (HOME)
  */
 
 window.views.home = {

@@ -1,5 +1,5 @@
 /**
- * SUMMERQUEN - ROUTER
+ * SUMMER QUEEN - ROUTER
  * Maneja el enrutamiento del lado del cliente basado en Hash (#/)
  */
 

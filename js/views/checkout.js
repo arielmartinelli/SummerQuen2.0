@@ -1,5 +1,5 @@
 /**
- * SUMMERQUEN - VISTA CHECKOUT (PROCESO DE PEDIDO Y PAGO)
+ * SUMMER QUEEN - VISTA CHECKOUT (PROCESO DE PEDIDO Y PAGO)
  */
 
 window.views.checkout = {
@@ -158,8 +158,8 @@ window.views.checkout = {
                                         <p>Por favor transfiera el importe total a la siguiente cuenta y envíe el comprobante por Whatsapp o Email.</p>
                                         <p><strong>Banco:</strong> Banco de la Nación Argentina (BNA)</p>
                                         <p><strong>CBU:</strong> 0110599540000123456789</p>
-                                        <p><strong>Alias:</strong> SUMMER.QUEN.CONFEC</p>
-                                        <p><strong>Titular:</strong> SummerQuen Confección S.R.L.</p>
+                                        <p><strong>Alias:</strong> SUMMER.QUEEN.CONFEC</p>
+                                        <p><strong>Titular:</strong> Summer Queen Confección S.R.L.</p>
                                         <p><strong>CUIT:</strong> 30-71123456-9</p>
                                     </div>
                                 </div>
@@ -217,7 +217,7 @@ window.views.checkout = {
                             <span style="display: flex; align-items: center; gap: 0.5rem; color: var(--color-text-primary); font-weight: 600;">
                                 <i data-lucide="lock" style="width: 16px; height: 16px; color: var(--color-success);"></i> Transacción Encriptada SSL
                             </span>
-                            Tus datos personales y bancarios están totalmente protegidos. SummerQuen no almacena información de tarjetas de crédito.
+                            Tus datos personales y bancarios están totalmente protegidos. Summer Queen no almacena información de tarjetas de crédito.
                         </div>
                     </aside>
                 </div>

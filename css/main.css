@@ -5,18 +5,22 @@
     --font-body: 'Outfit', sans-serif;
 
     /* Theme-independent colors */
-    --color-primary: hsl(28, 65%, 52%); /* Rich Copper/Amber */
-    --color-primary-hover: hsl(28, 70%, 45%);
-    --color-primary-light: hsla(28, 65%, 52%, 0.15);
+    --color-primary: #ee8b22; /* Flyer Orange */
+    --color-primary-hover: #d67512;
+    --color-primary-light: rgba(238, 139, 34, 0.15);
     
-    --color-success: hsl(145, 63%, 42%);
-    --color-success-bg: hsla(145, 63%, 42%, 0.1);
-    --color-warning: hsl(38, 92%, 50%);
-    --color-warning-bg: hsla(38, 92%, 50%, 0.1);
-    --color-danger: hsl(355, 78%, 56%);
-    --color-danger-bg: hsla(355, 78%, 56%, 0.1);
-    --color-info: hsl(195, 85%, 45%);
-    --color-info-bg: hsla(195, 85%, 45%, 0.1);
+    --color-teal: #00b9d7; /* Flyer Turquoise/Teal */
+    --color-teal-hover: #00a2c0;
+    --color-teal-light: rgba(0, 185, 215, 0.15);
+
+    --color-success: #10b981;
+    --color-success-bg: rgba(16, 185, 129, 0.1);
+    --color-warning: #f59e0b;
+    --color-warning-bg: rgba(245, 158, 11, 0.1);
+    --color-danger: #e83a31; /* Flyer Red */
+    --color-danger-bg: rgba(232, 58, 49, 0.1);
+    --color-info: #00b9d7;
+    --color-info-bg: rgba(0, 185, 215, 0.1);
 
     /* Transitions & Shadows */
     --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -26,7 +30,7 @@
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
     --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.12);
-    --shadow-glow: 0 0 20px hsla(28, 65%, 52%, 0.2);
+    --shadow-glow: 0 0 20px rgba(238, 139, 34, 0.2);
 
     --border-radius-sm: 6px;
     --border-radius-md: 12px;
@@ -36,34 +40,34 @@
     --container-max-width: 1280px;
 }
 
-/* Dark Theme (Default) */
+/* Dark Theme (Default - Deep Navy / Space) */
 .dark-theme {
-    --color-bg: hsl(220, 18%, 8%);
-    --color-bg-alt: hsl(220, 18%, 11%);
-    --color-card: hsl(220, 16%, 13%);
-    --color-card-hover: hsl(220, 16%, 16%);
-    --color-border: hsl(220, 14%, 18%);
-    --color-text-primary: hsl(210, 15%, 96%);
-    --color-text-muted: hsl(210, 10%, 70%);
-    --color-text-inv: hsl(220, 15%, 15%);
-    --color-input: hsl(220, 15%, 10%);
-    --glass-bg: rgba(18, 20, 24, 0.75);
+    --color-bg: #031224; /* Flyer Deep Navy */
+    --color-bg-alt: #051b33;
+    --color-card: #082444;
+    --color-card-hover: #0c2e55;
+    --color-border: #133a66;
+    --color-text-primary: #f0f6fc;
+    --color-text-muted: #85b0d9;
+    --color-text-inv: #ffffff;
+    --color-input: #020d1c;
+    --glass-bg: rgba(3, 18, 36, 0.85);
     --glass-border: rgba(255, 255, 255, 0.08);
 }
 
-/* Light Theme Toggle */
+/* Light Theme Toggle - Cool Ice White */
 .light-theme {
-    --color-bg: hsl(40, 20%, 96%);
-    --color-bg-alt: hsl(40, 15%, 92%);
-    --color-card: hsl(0, 0%, 100%);
-    --color-card-hover: hsl(0, 0%, 97%);
-    --color-border: hsl(220, 12%, 86%);
-    --color-text-primary: hsl(220, 18%, 12%);
-    --color-text-muted: hsl(220, 12%, 46%);
-    --color-text-inv: hsl(210, 15%, 96%);
-    --color-input: hsl(0, 0%, 98%);
-    --glass-bg: rgba(246, 245, 242, 0.85);
-    --glass-border: rgba(0, 0, 0, 0.08);
+    --color-bg: #f3f7fa;
+    --color-bg-alt: #e4edf4;
+    --color-card: #ffffff;
+    --color-card-hover: #f7fafc;
+    --color-border: #ccdbeb;
+    --color-text-primary: #002244;
+    --color-text-muted: #3a5c80;
+    --color-text-inv: #ffffff;
+    --color-input: #ffffff;
+    --glass-bg: rgba(243, 247, 250, 0.9);
+    --glass-border: rgba(0, 34, 68, 0.08);
 }
 
 /* GLOBAL RESET & BASE STYLES */
@@ -144,9 +148,25 @@ ul {
     font-size: 1.8rem;
     font-weight: 700;
     letter-spacing: -0.5px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    gap: 0.8rem;
     color: var(--color-text-primary);
+}
+
+.logo-img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--color-primary);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-bounce), border-color var(--transition-fast);
+}
+
+.logo:hover .logo-img {
+    transform: scale(1.08) rotate(8deg);
+    border-color: var(--color-teal);
 }
 
 .logo-text-accent {

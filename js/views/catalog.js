@@ -1,5 +1,5 @@
 /**
- * SUMMERQUEN - VISTA CATALOGO (CATALOG)
+ * SUMMER QUEEN - VISTA CATALOGO (CATALOG)
  */
 
 window.views.catalog = {

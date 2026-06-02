@@ -1,5 +1,5 @@
 /**
- * SUMMERQUEN - VISTA CONTACTO Y CHAT DE SOPORTE
+ * SUMMER QUEEN - VISTA CONTACTO Y CHAT DE SOPORTE
  */
 
 window.views.contact = {
@@ -44,8 +44,8 @@ window.views.contact = {
                             </div>
                             <div class="contact-card-info">
                                 <h3>Correos Electrónicos</h3>
-                                <p style="font-weight: 600; color: var(--color-text-primary); margin: 0.2rem 0;">ventas@summerquen.com</p>
-                                <p>consultas@summerquen.com</p>
+                                <p style="font-weight: 600; color: var(--color-text-primary); margin: 0.2rem 0;">ventas@summerqueen.com</p>
+                                <p>consultas@summerqueen.com</p>
                             </div>
                         </div>
                         
@@ -65,11 +65,11 @@ window.views.contact = {
                             <div id="simulatedChat" style="width: 100%; border: 1px solid var(--color-border); border-radius: var(--border-radius-md); background-color: var(--color-input); overflow: hidden; display: flex; flex-direction: column; height: 260px;">
                                 <div style="background-color: var(--color-bg-alt); padding: 0.5rem 1rem; font-size: 0.8rem; font-weight: 600; border-bottom: 1px solid var(--color-border); display: flex; align-items: center; gap: 0.5rem;">
                                     <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-success);"></span>
-                                    Soporte SummerQuen (En línea)
+                                    Soporte Summer Queen (En línea)
                                 </div>
                                 <div id="chatMessages" style="flex-grow: 1; padding: 1rem; overflow-y: auto; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.8rem;">
                                     <div style="align-self: flex-start; background-color: var(--color-card); padding: 0.5rem 0.8rem; border-radius: 4px 12px 12px 12px; max-width: 85%;">
-                                        ¡Hola! Soy el asistente virtual de SummerQuen. Escribe el número de tu opción:<br><br>
+                                        ¡Hola! Soy el asistente virtual de Summer Queen. Escribe el número de tu opción:<br><br>
                                         <strong>1.</strong> Consultar estado de pedido<br>
                                         <strong>2.</strong> Presupuesto ropa de egresados<br>
                                         <strong>3.</strong> Medios de envío y plazos
@@ -196,7 +196,7 @@ window.views.contact = {
                         response = `No encontré ningún pedido con el código <strong>${query}</strong> en nuestra base de datos. Verifica el código e intenta de nuevo.`;
                     }
                 } else {
-                    response = `Entiendo. Si tienes una consulta específica de diseño, telas o te gustaría enviarnos tu boceto, escríbenos a <strong>ventas@summerquen.com</strong> o elige una opción escribiendo su número (1, 2 o 3).`;
+                    response = `Entiendo. Si tienes una consulta específica de diseño, telas o te gustaría enviarnos tu boceto, escríbenos a <strong>ventas@summerqueen.com</strong> o elige una opción escribiendo su número (1, 2 o 3).`;
                 }
 
                 appendMessage(response, "bot");

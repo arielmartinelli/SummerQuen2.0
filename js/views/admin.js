@@ -28,7 +28,7 @@ window.views.admin = {
                     <form id="adminLoginForm" style="display: flex; flex-direction: column; gap: 0.5rem;">
                         <div class="form-group">
                             <label class="form-label" for="loginEmail">Correo Electrónico</label>
-                            <input type="email" id="loginEmail" class="form-control" placeholder="admin@summerquen.com" required>
+                            <input type="email" id="loginEmail" class="form-control" placeholder="admin@summerqueen.com" required>
                         </div>
                         
                         <div class="form-group">
@@ -43,7 +43,7 @@ window.views.admin = {
                     
                     <div style="margin-top: 1.5rem; text-align: center; font-size: 0.85rem; color: var(--color-text-muted); background-color: var(--color-bg-alt); padding: 0.8rem; border-radius: var(--border-radius-sm); border: 1px solid var(--color-border);">
                         <strong>Credenciales Demo:</strong><br>
-                        Email: <code>admin@summerquen.com</code><br>
+                        Email: <code>admin@summerqueen.com</code><br>
                         Password: <code>admin123</code>
                     </div>
                 </div>
