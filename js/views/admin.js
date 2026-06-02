@@ -138,8 +138,8 @@ window.views.admin = {
                             </div>
                             <div class="form-grid">
                                 <div class="form-group">
-                                    <label class="form-label" for="prodStock">Stock Inicial *</label>
-                                    <input type="number" id="prodStock" class="form-control" placeholder="30" min="0" required>
+                                    <label class="form-label" for="prodStock">Stock Total (Autocalculado) *</label>
+                                    <input type="number" id="prodStock" class="form-control" placeholder="Se calcula de las variantes" min="0" readonly required>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="prodFeatured">Destacado</label>
@@ -178,14 +178,21 @@ window.views.admin = {
                                 <label class="form-label" for="prodMaterials">Ficha Técnica: Materiales</label>
                                 <input type="text" id="prodMaterials" class="form-control" placeholder="80% Algodón, 20% Fibras Sintéticas">
                             </div>
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label class="form-label" for="prodColors">Colores (Separados por coma)</label>
-                                    <input type="text" id="prodColors" class="form-control" placeholder="Negro, Azul Marino, Gris">
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="prodSizes">Talles (Separados por coma)</label>
+                                <input type="text" id="prodSizes" class="form-control" placeholder="S, M, L, XL">
+                            </div>
+
+                            <div style="border-top: 1px solid var(--color-border); padding-top: 1.25rem; margin-top: 1.25rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                                    <label class="form-label" style="font-weight: 700; margin: 0; color: var(--color-primary);">Variantes de Color *</label>
+                                    <button type="button" class="btn btn-outline btn-xs" id="addVariantRowBtn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i data-lucide="plus" style="width: 14px; height: 14px;"></i> Añadir Color
+                                    </button>
                                 </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="prodSizes">Talles (Separados por coma)</label>
-                                    <input type="text" id="prodSizes" class="form-control" placeholder="S, M, L, XL">
+                                <div id="variantsContainer" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 250px; overflow-y: auto; padding-right: 0.25rem; margin-bottom: 1rem;">
+                                    <!-- Filas de variantes de color -->
                                 </div>
                             </div>
                         </div>
@@ -260,7 +267,22 @@ window.views.admin = {
             salePriceInput.value = "";
             salePriceInput.disabled = true;
             salePriceInput.required = false;
+
+            // Limpiar contenedor de variantes
+            const variantsContainer = document.getElementById("variantsContainer");
+            if (variantsContainer) {
+                variantsContainer.innerHTML = "";
+            }
         };
+
+        // Escuchar botón de añadir variante
+        const addVariantBtn = document.getElementById("addVariantRowBtn");
+        const variantsContainer = document.getElementById("variantsContainer");
+        if (addVariantBtn && variantsContainer) {
+            addVariantBtn.addEventListener("click", () => {
+                this.createVariantRow(variantsContainer, "", 0, "");
+            });
+        }
 
         // Escuchar subida de archivo para la foto
         const fileInput = document.getElementById("prodImageFile");
@@ -558,6 +580,13 @@ window.views.admin = {
             document.getElementById("prodSalePrice").disabled = true;
             document.getElementById("prodSalePrice").required = false;
 
+            // Inicializar variantes con una fila vacía
+            const variantsContainer = document.getElementById("variantsContainer");
+            if (variantsContainer) {
+                variantsContainer.innerHTML = "";
+                this.createVariantRow(variantsContainer, "", 0, "");
+            }
+
             modalOverlay.classList.add("active");
         });
 
@@ -578,8 +607,29 @@ window.views.admin = {
                     document.getElementById("prodFeatured").value = prod.featured ? "true" : "false";
                     document.getElementById("prodDesc").value = prod.description;
                     document.getElementById("prodMaterials").value = prod.materials || "";
-                    document.getElementById("prodColors").value = prod.colors ? prod.colors.join(", ") : "";
                     document.getElementById("prodSizes").value = prod.sizes ? prod.sizes.join(", ") : "";
+
+                    // Cargar variantes de color
+                    const variantsContainer = document.getElementById("variantsContainer");
+                    if (variantsContainer) {
+                        variantsContainer.innerHTML = "";
+                        if (prod.variants && prod.variants.length > 0) {
+                            prod.variants.forEach(v => {
+                                this.createVariantRow(variantsContainer, v.color, v.stock, v.image);
+                            });
+                        } else if (prod.colors && prod.colors.length > 0) {
+                            // Fallback
+                            const computedStock = Math.floor(prod.stock / prod.colors.length);
+                            prod.colors.forEach((col, idx) => {
+                                const stockForThisColor = (idx === prod.colors.length - 1)
+                                    ? prod.stock - (computedStock * (prod.colors.length - 1))
+                                    : computedStock;
+                                this.createVariantRow(variantsContainer, col, stockForThisColor, prod.image);
+                            });
+                        } else {
+                            this.createVariantRow(variantsContainer, "Único", prod.stock, prod.image);
+                        }
+                    }
 
                     // Cargar estado de oferta
                     const onSale = !!prod.onSale;
@@ -631,12 +681,58 @@ window.views.admin = {
 
     handleProductSubmit: function(closeModalCallback) {
         // Capturar datos del formulario
-        const colorVal = document.getElementById("prodColors").value;
         const sizeVal = document.getElementById("prodSizes").value;
         const onSale = document.getElementById("prodOnSale").checked;
         const base64Value = document.getElementById("prodImageBase64").value;
 
-        window.components.showToast(`Guardando... Imagen en Base64: ${base64Value ? "Sí (" + Math.round(base64Value.length / 1024) + " KB)" : "No"}`, "info");
+        // Recopilar variantes de color
+        const variantRows = document.querySelectorAll(".variant-row");
+        const variants = [];
+        const colors = [];
+        let computedTotalStock = 0;
+
+        variantRows.forEach(row => {
+            const colorInput = row.querySelector(".variant-color-input");
+            const stockInput = row.querySelector(".variant-stock-input");
+            const base64Input = row.querySelector(".variant-base64-input");
+
+            const color = colorInput ? colorInput.value.trim() : "";
+            const stock = stockInput ? parseInt(stockInput.value) || 0 : 0;
+            const image = base64Input ? base64Input.value : "";
+
+            if (color) {
+                variants.push({ color, stock, image });
+                if (!colors.includes(color)) {
+                    colors.push(color);
+                }
+                computedTotalStock += stock;
+            }
+        });
+
+        // Validar que haya al menos una variante de color válida
+        if (variants.length === 0) {
+            window.components.showToast("Debes ingresar al menos una variante de color válida", "error");
+            return;
+        }
+
+        // Si no tiene imagen principal, intentar usar la de la primera variante
+        let mainImage = base64Value || "";
+        if (!mainImage && variants.length > 0 && variants[0].image) {
+            mainImage = variants[0].image;
+        }
+
+        // Construir la galería completa de imágenes
+        const uniqueImages = [];
+        if (mainImage) {
+            uniqueImages.push(mainImage);
+        }
+        variants.forEach(v => {
+            if (v.image && !uniqueImages.includes(v.image)) {
+                uniqueImages.push(v.image);
+            }
+        });
+
+        window.components.showToast(`Guardando... Variantes: ${variants.length} | Stock total: ${computedTotalStock}`, "info");
 
         const productData = {
             title: document.getElementById("prodTitle").value,
@@ -644,13 +740,15 @@ window.views.admin = {
             price: parseFloat(document.getElementById("prodPrice").value),
             onSale: onSale,
             salePrice: onSale ? parseFloat(document.getElementById("prodSalePrice").value) : 0,
-            stock: parseInt(document.getElementById("prodStock").value),
+            stock: computedTotalStock,
             featured: document.getElementById("prodFeatured").value === "true",
             description: document.getElementById("prodDesc").value,
             materials: document.getElementById("prodMaterials").value,
-            colors: colorVal ? colorVal.split(",").map(c => c.trim()) : [],
+            colors: colors,
             sizes: sizeVal ? sizeVal.split(",").map(s => s.trim()) : [],
-            image: base64Value || ""
+            variants: variants,
+            image: mainImage,
+            images: uniqueImages
         };
 
         if (this.editingProductId) {
@@ -886,5 +984,105 @@ window.views.admin = {
                 </div>
             </div>
         `;
+    },
+
+    createVariantRow: function(container, color = "", stock = 0, image = "") {
+        const row = document.createElement("div");
+        row.className = "variant-row";
+        row.style.cssText = "display: grid; grid-template-columns: 2.2fr 1.2fr 3.5fr auto; gap: 0.75rem; align-items: center; background-color: var(--color-bg-alt); padding: 0.6rem; border-radius: var(--border-radius-sm); border: 1px solid var(--color-border);";
+        
+        const previewStyle = image ? "display: block;" : "display: none;";
+        const placeholderStyle = image ? "display: none;" : "display: flex; align-items: center; justify-content: center;";
+        const srcAttr = image ? `src="${image}"` : "";
+
+        row.innerHTML = `
+            <div>
+                <input type="text" class="form-control variant-color-input" placeholder="Color (ej: Negro)" value="${color}" required style="padding: 0.4rem 0.6rem; font-size: 0.85rem;">
+            </div>
+            <div>
+                <input type="number" class="form-control variant-stock-input" placeholder="Stock" min="0" value="${stock}" required style="padding: 0.4rem 0.6rem; font-size: 0.85rem;">
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; overflow: hidden;">
+                <div class="variant-img-preview-wrapper" style="width: 32px; height: 32px; border-radius: 4px; border: 1px solid var(--color-border); overflow: hidden; background: var(--color-bg); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                    <img class="variant-img-preview" ${srcAttr} style="width: 100%; height: 100%; object-fit: cover; ${previewStyle}">
+                    <span class="variant-img-placeholder" style="font-size: 0.6rem; color: var(--color-text-muted); font-weight: 500; ${placeholderStyle}">No</span>
+                </div>
+                <input type="file" class="variant-file-input" accept="image/*" style="font-size: 0.75rem; cursor: pointer; flex-grow: 1; max-width: 150px;">
+                <input type="hidden" class="variant-base64-input" value="${image}">
+            </div>
+            <button type="button" class="btn btn-danger btn-sm remove-variant-btn" style="padding: 0.35rem; border-radius: var(--border-radius-sm); display: flex; align-items: center; justify-content: center;" title="Eliminar Variante">
+                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+            </button>
+        `;
+
+        container.appendChild(row);
+        this.bindVariantRowEvents(row);
+        if (window.lucide) window.lucide.createIcons();
+    },
+
+    bindVariantRowEvents: function(row) {
+        const fileInput = row.querySelector(".variant-file-input");
+        const base64Input = row.querySelector(".variant-base64-input");
+        const imgPreview = row.querySelector(".variant-img-preview");
+        const placeholder = row.querySelector(".variant-img-placeholder");
+        const stockInput = row.querySelector(".variant-stock-input");
+        const removeBtn = row.querySelector(".remove-variant-btn");
+
+        stockInput.addEventListener("input", () => {
+            this.recalculateTotalStock();
+        });
+
+        fileInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                window.components.showToast(`Procesando foto de variante: ${file.name} (${Math.round(file.size / 1024)} KB)`, "info");
+                if (file.size > 2 * 1024 * 1024) {
+                    window.components.showToast("La foto de la variante debe ser menor a 2MB", "error");
+                    fileInput.value = "";
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onerror = () => {
+                    window.components.showToast("Error al leer el archivo de imagen de variante", "error");
+                };
+                reader.onload = (evt) => {
+                    const base64 = evt.target.result;
+                    base64Input.value = base64;
+                    imgPreview.src = base64;
+                    imgPreview.style.display = "block";
+                    placeholder.style.display = "none";
+                    window.components.showToast("¡Foto de variante cargada con éxito!", "success");
+                    
+                    const prodImageBase64 = document.getElementById("prodImageBase64");
+                    const prodImagePreview = document.getElementById("prodImagePreview");
+                    const prodImagePreviewContainer = document.getElementById("prodImagePreviewContainer");
+                    if (prodImageBase64 && !prodImageBase64.value) {
+                        prodImageBase64.value = base64;
+                        if (prodImagePreview) prodImagePreview.src = base64;
+                        if (prodImagePreviewContainer) prodImagePreviewContainer.style.display = "flex";
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        removeBtn.addEventListener("click", () => {
+            row.remove();
+            this.recalculateTotalStock();
+            window.components.showToast("Variante eliminada", "info");
+        });
+    },
+
+    recalculateTotalStock: function() {
+        const stockInputs = document.querySelectorAll(".variant-stock-input");
+        let total = 0;
+        stockInputs.forEach(input => {
+            const val = parseInt(input.value) || 0;
+            total += val;
+        });
+        const prodStockInput = document.getElementById("prodStock");
+        if (prodStockInput) {
+            prodStockInput.value = total;
+        }
     }
 };

@@ -59,6 +59,11 @@ const SEED_PRODUCTS = [
             generateMockSvg("egresados", "Buzo Universe - Frente", "#3b82f6"),
             generateMockSvg("egresados", "Buzo Universe - Espalda", "#1e3a8a"),
             generateMockSvg("egresados", "Buzo Universe - Textura", "#60a5fa")
+        ],
+        variants: [
+            { color: "Azul Marino", stock: 20, image: generateMockSvg("egresados", "Buzo Universe - Azul", "#1e3a8a") },
+            { color: "Negro Carbono", stock: 15, image: generateMockSvg("egresados", "Buzo Universe - Negro", "#111827") },
+            { color: "Borgoña", stock: 10, image: generateMockSvg("egresados", "Buzo Universe - Borgoña", "#881337") }
         ]
     },
     {
@@ -78,6 +83,11 @@ const SEED_PRODUCTS = [
         images: [
             generateMockSvg("egresados", "Campera Varsity - Vista General", "#ef4444"),
             generateMockSvg("egresados", "Campera Varsity - Detalle Bordado", "#991b1b")
+        ],
+        variants: [
+            { color: "Rojo/Blanco", stock: 10, image: generateMockSvg("egresados", "Varsity - Rojo/Blanco", "#b91c1c") },
+            { color: "Negro/Blanco", stock: 10, image: generateMockSvg("egresados", "Varsity - Negro/Blanco", "#1f2937") },
+            { color: "Verde/Blanco", stock: 10, image: generateMockSvg("egresados", "Varsity - Verde/Blanco", "#065f46") }
         ]
     },
     {
@@ -94,7 +104,12 @@ const SEED_PRODUCTS = [
         stock: 60,
         featured: false,
         image: generateMockSvg("egresados", "Chomba Vintage", "#10b981"),
-        images: [generateMockSvg("egresados", "Chomba Vintage", "#10b981")]
+        images: [generateMockSvg("egresados", "Chomba Vintage", "#10b981")],
+        variants: [
+            { color: "Gris Melange", stock: 20, image: generateMockSvg("egresados", "Chomba - Gris", "#4b5563") },
+            { color: "Blanco Óptico", stock: 20, image: generateMockSvg("egresados", "Chomba - Blanco", "#f9fafb") },
+            { color: "Azul Francia", stock: 20, image: generateMockSvg("egresados", "Chomba - Azul", "#2563eb") }
+        ]
     },
     {
         id: "prod-4",
@@ -114,6 +129,11 @@ const SEED_PRODUCTS = [
             generateMockSvg("mochilas", "Mochila Urban Tech - Cerrada", "#eab308"),
             generateMockSvg("mochilas", "Mochila Urban Tech - Interior", "#ca8a04"),
             generateMockSvg("mochilas", "Mochila Urban Tech - Puesta", "#fef08a")
+        ],
+        variants: [
+            { color: "Negro Mate", stock: 10, image: generateMockSvg("mochilas", "Urban Tech - Negro", "#111827") },
+            { color: "Gris Asfalto", stock: 10, image: generateMockSvg("mochilas", "Urban Tech - Gris", "#374151") },
+            { color: "Mostaza", stock: 5, image: generateMockSvg("mochilas", "Urban Tech - Mostaza", "#d97706") }
         ]
     },
     {
@@ -130,7 +150,12 @@ const SEED_PRODUCTS = [
         stock: 20,
         featured: false,
         image: generateMockSvg("mochilas", "Mochila Canvas", "#84cc16"),
-        images: [generateMockSvg("mochilas", "Mochila Canvas", "#84cc16")]
+        images: [generateMockSvg("mochilas", "Mochila Canvas", "#84cc16")],
+        variants: [
+            { color: "Beige Arena", stock: 8, image: generateMockSvg("mochilas", "Canvas - Beige", "#f5f5dc") },
+            { color: "Verde Oliva", stock: 7, image: generateMockSvg("mochilas", "Canvas - Verde", "#3f6212") },
+            { color: "Azul Denim", stock: 5, image: generateMockSvg("mochilas", "Canvas - Denim", "#1e3a8a") }
+        ]
     },
     {
         id: "prod-6",
@@ -146,7 +171,12 @@ const SEED_PRODUCTS = [
         stock: 50,
         featured: true,
         image: generateMockSvg("accesorios", "Snapback Cap", "#a855f7"),
-        images: [generateMockSvg("accesorios", "Snapback Cap", "#a855f7")]
+        images: [generateMockSvg("accesorios", "Snapback Cap", "#a855f7")],
+        variants: [
+            { color: "Negro", stock: 20, image: generateMockSvg("accesorios", "Snapback - Negro", "#111827") },
+            { color: "Borgoña", stock: 15, image: generateMockSvg("accesorios", "Snapback - Borgoña", "#881337") },
+            { color: "Verde Militar", stock: 15, image: generateMockSvg("accesorios", "Snapback - Verde", "#3f6212") }
+        ]
     },
     {
         id: "prod-7",
@@ -162,7 +192,11 @@ const SEED_PRODUCTS = [
         stock: 35,
         featured: false,
         image: generateMockSvg("accesorios", "Piluso Reversible", "#ec4899"),
-        images: [generateMockSvg("accesorios", "Piluso Reversible", "#ec4899")]
+        images: [generateMockSvg("accesorios", "Piluso Reversible", "#ec4899")],
+        variants: [
+            { color: "Camo/Negro", stock: 20, image: generateMockSvg("accesorios", "Piluso - Camo", "#14532d") },
+            { color: "Amarillo/Negro", stock: 15, image: generateMockSvg("accesorios", "Piluso - Amarillo", "#ca8a04") }
+        ]
     },
     {
         id: "prod-8",
@@ -178,7 +212,12 @@ const SEED_PRODUCTS = [
         stock: 40,
         featured: false,
         image: generateMockSvg("accesorios", "Cartuchera Rolla", "#06b6d4"),
-        images: [generateMockSvg("accesorios", "Cartuchera Rolla", "#06b6d4")]
+        images: [generateMockSvg("accesorios", "Cartuchera Rolla", "#06b6d4")],
+        variants: [
+            { color: "Kaki", stock: 15, image: generateMockSvg("accesorios", "Cartuchera - Kaki", "#c2a278") },
+            { color: "Denim", stock: 15, image: generateMockSvg("accesorios", "Cartuchera - Denim", "#3b82f6") },
+            { color: "Ocre", stock: 10, image: generateMockSvg("accesorios", "Cartuchera - Ocre", "#b45309") }
+        ]
     }
 ];
 
@@ -268,10 +307,10 @@ class StateManager {
     }
 
     initDatabase() {
-        // Auto-limpieza de caché local antigua si detecta el correo de desarrollo viejo
-        const rawUsers = localStorage.getItem("sq_users");
-        if (rawUsers && rawUsers.includes("admin@summerquen.com")) {
+        // Auto-limpieza y actualización de base de datos para la versión 3 (variantes de color)
+        if (!localStorage.getItem("sq_db_version_3")) {
             localStorage.clear();
+            localStorage.setItem("sq_db_version_3", "true");
         }
 
         // Inicializar Productos
@@ -344,8 +383,8 @@ class StateManager {
                 updatedProduct.image = oldImage;
             }
             
-            // Si la imagen principal cambió, actualizar la galería con la nueva imagen
-            if (updatedProduct.image && updatedProduct.image !== oldImage) {
+            // Si la imagen principal cambió y no se especificó una galería múltiple, actualizar la galería con la nueva imagen
+            if (updatedProduct.image && updatedProduct.image !== oldImage && (!updatedProduct.images || updatedProduct.images.length <= 1)) {
                 updatedProduct.images = [updatedProduct.image];
             } else if ((!updatedProduct.images || updatedProduct.images.length === 0) && products[index].images) {
                 updatedProduct.images = products[index].images;
@@ -388,12 +427,28 @@ class StateManager {
         const product = this.getProductById(productId);
         if (!product) return false;
 
-        // Comprobar si ya existe la misma variante del producto
+        // Obtener variante del color correspondiente para validar stock
+        const variant = (product.variants && product.variants.length > 0)
+            ? product.variants.find(v => v.color.toLowerCase() === color.toLowerCase())
+            : null;
+        
+        const availableStock = variant ? variant.stock : product.stock;
+
+        // Comprobar si ya existe la misma variante del producto en el carrito
         const existingItem = cart.find(item => 
             item.productId === productId && 
-            item.color === color && 
+            item.color.toLowerCase() === color.toLowerCase() && 
             item.size === size
         );
+
+        const currentQty = existingItem ? existingItem.quantity : 0;
+        if (currentQty + parseInt(qty) > availableStock) {
+            window.components.showToast(`Stock insuficiente. Solo quedan ${availableStock} unidades del color ${color}.`, "error");
+            return false;
+        }
+
+        // Usar la foto del color si tiene
+        const itemImage = (variant && variant.image) ? variant.image : product.image;
 
         if (existingItem) {
             existingItem.quantity += parseInt(qty);
@@ -403,7 +458,7 @@ class StateManager {
                 productId,
                 title: product.title,
                 price: price,
-                image: product.image,
+                image: itemImage,
                 category: product.category,
                 quantity: parseInt(qty),
                 color,
@@ -510,12 +565,21 @@ class StateManager {
         orders.push(newOrder);
         localStorage.setItem("sq_orders", JSON.stringify(orders));
 
-        // Descontar Stock de los productos
+        // Descontar Stock de los productos y sus variantes específicas
         const products = this.getProducts();
         newOrder.items.forEach(orderItem => {
             const product = products.find(p => p.id === orderItem.productId);
             if (product) {
-                product.stock = Math.max(0, product.stock - orderItem.quantity);
+                if (product.variants && product.variants.length > 0) {
+                    const variant = product.variants.find(v => v.color.toLowerCase() === orderItem.color.toLowerCase());
+                    if (variant) {
+                        variant.stock = Math.max(0, variant.stock - orderItem.quantity);
+                    }
+                    // Actualizar el stock total como la suma del stock de sus variantes
+                    product.stock = product.variants.reduce((sum, v) => sum + v.stock, 0);
+                } else {
+                    product.stock = Math.max(0, product.stock - orderItem.quantity);
+                }
             }
         });
         localStorage.setItem("sq_products", JSON.stringify(products));

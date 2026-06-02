@@ -15,12 +15,18 @@ window.views.product = {
             return;
         }
 
+        const initialColor = product.colors && product.colors.length > 0 ? product.colors[0] : "";
+        const initialVariant = (product.variants && product.variants.length > 0)
+            ? product.variants.find(v => v.color.toLowerCase() === initialColor.toLowerCase())
+            : null;
+        const initialStock = initialVariant ? initialVariant.stock : product.stock;
+
         // Estado local del producto seleccionado
         this.selectedConfig = {
             productId: product.id,
-            color: product.colors && product.colors.length > 0 ? product.colors[0] : "",
+            color: initialColor,
             size: product.sizes && product.sizes.length > 0 ? product.sizes[0] : "",
-            quantity: 1
+            quantity: initialStock > 0 ? 1 : 0
         };
 
         // Formatear precio
@@ -53,8 +59,16 @@ window.views.product = {
         }
 
         // Estilos para galería
-        const mainImage = product.image;
-        const allImages = product.images || [mainImage];
+        const mainImage = (initialVariant && initialVariant.image) ? initialVariant.image : product.image;
+        
+        // Reunir todas las imágenes de variantes para la galería de miniaturas
+        let allImages = [];
+        if (product.variants && product.variants.length > 0) {
+            allImages = product.variants.map(v => v.image).filter(Boolean);
+        }
+        if (allImages.length === 0) {
+            allImages = product.images || [mainImage];
+        }
 
         // Construir HTML de la galería de miniaturas
         let thumbnailsHtml = "";
@@ -137,20 +151,20 @@ window.views.product = {
                                     <button class="qty-btn" id="prodQtyMinus">
                                         <i data-lucide="minus" style="width: 14px; height: 14px;"></i>
                                     </button>
-                                    <input type="number" id="prodQtyVal" value="1" min="1" max="${product.stock}" readonly>
+                                    <input type="number" id="prodQtyVal" value="${initialStock > 0 ? '1' : '0'}" min="${initialStock > 0 ? '1' : '0'}" max="${initialStock}" readonly>
                                     <button class="qty-btn" id="prodQtyPlus">
                                         <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
                                     </button>
                                 </div>
                                 
-                                <button class="btn btn-primary" id="addToCartMainBtn" style="flex-grow: 1;" ${product.stock === 0 ? 'disabled' : ''}>
+                                <button class="btn btn-primary" id="addToCartMainBtn" style="flex-grow: 1;" ${initialStock === 0 ? 'disabled' : ''}>
                                     <i data-lucide="shopping-bag"></i> 
-                                    ${product.stock === 0 ? 'Sin Stock Disponible' : 'Agregar al Carrito'}
+                                    ${initialStock === 0 ? 'Sin Stock en este color' : 'Agregar al Carrito'}
                                 </button>
                             </div>
-                            <span style="font-size: 0.85rem; color: var(--color-text-muted);">
-                                ${product.stock > 0 ? `Stock disponible: <strong>${product.stock}</strong> unidades` : '<strong style="color: var(--color-danger);">Producto Agotado</strong>'}
-                            </span>
+                             <span style="font-size: 0.85rem; color: var(--color-text-muted);" id="variantStockLabel">
+                                ${initialStock > 0 ? `Stock disponible: <strong>${initialStock}</strong> unidades` : '<strong style="color: var(--color-danger);">Agotado en este color</strong>'}
+                             </span>
                         </div>
 
                         <!-- Especificaciones de Confección -->
@@ -218,14 +232,57 @@ window.views.product = {
             btn.addEventListener("click", () => {
                 colorButtons.forEach(b => b.classList.remove("active"));
                 btn.classList.add("active");
-                this.selectedConfig.color = btn.getAttribute("data-value");
+                
+                const selectedColor = btn.getAttribute("data-value");
+                this.selectedConfig.color = selectedColor;
+
+                // Si el producto tiene variantes por color, actualizar imagen y stock en tiempo real
+                if (product.variants && product.variants.length > 0) {
+                    const variant = product.variants.find(v => v.color.toLowerCase() === selectedColor.toLowerCase());
+                    if (variant) {
+                        // Cambiar la foto principal por la foto de ese color
+                        if (variant.image) {
+                            mainImageEl.src = variant.image;
+                            
+                            // Marcar miniatura correspondiente como activa en la galería
+                            thumbnails.forEach(t => {
+                                if (t.getAttribute("data-src") === variant.image) {
+                                    t.classList.add("active");
+                                } else {
+                                    t.classList.remove("active");
+                                }
+                            });
+                        }
+
+                        // Actualizar el stock disponible en pantalla
+                        const stockLabelEl = document.getElementById("variantStockLabel");
+                        if (stockLabelEl) {
+                            if (variant.stock > 0) {
+                                stockLabelEl.innerHTML = `Stock disponible: <strong>${variant.stock}</strong> unidades`;
+                                addBtn.disabled = false;
+                                addBtn.innerHTML = `<i data-lucide="shopping-bag"></i> Agregar al Carrito`;
+                            } else {
+                                stockLabelEl.innerHTML = `<strong style="color: var(--color-danger);">Agotado en este color</strong>`;
+                                addBtn.disabled = true;
+                                addBtn.innerHTML = `Sin Stock en este color`;
+                            }
+                        }
+                        
+                        // Reajustar cantidad a 1 (o 0 si no hay stock)
+                        qtyVal.value = variant.stock > 0 ? "1" : "0";
+                        this.selectedConfig.quantity = variant.stock > 0 ? 1 : 0;
+                    }
+                }
+                
+                if (window.lucide) window.lucide.createIcons();
             });
         });
 
         // Eventos Cantidad
         qtyMinus.addEventListener("click", () => {
             let current = parseInt(qtyVal.value);
-            if (current > 1) {
+            const minAllowed = this.selectedConfig.quantity > 0 ? 1 : 0;
+            if (current > minAllowed) {
                 qtyVal.value = current - 1;
                 this.selectedConfig.quantity = current - 1;
             }
@@ -233,11 +290,19 @@ window.views.product = {
 
         qtyPlus.addEventListener("click", () => {
             let current = parseInt(qtyVal.value);
-            if (current < product.stock) {
+            
+            // Buscar stock límite de la variante de color activa
+            const activeColor = this.selectedConfig.color;
+            const variant = (product.variants && product.variants.length > 0)
+                ? product.variants.find(v => v.color.toLowerCase() === activeColor.toLowerCase())
+                : null;
+            const maxStock = variant ? variant.stock : product.stock;
+
+            if (current < maxStock) {
                 qtyVal.value = current + 1;
                 this.selectedConfig.quantity = current + 1;
             } else {
-                window.components.showToast("Límite de stock disponible", "info");
+                window.components.showToast("Límite de stock disponible para este color", "info");
             }
         });
 
