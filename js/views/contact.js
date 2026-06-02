@@ -102,6 +102,11 @@ window.views.contact = {
                             </div>
 
                             <div class="form-group">
+                                <label class="form-label" for="conPhone">Número de Teléfono / WhatsApp *</label>
+                                <input type="tel" id="conPhone" class="form-control" placeholder="Ej: +54 9 11 5566-7788" required>
+                            </div>
+
+                            <div class="form-group">
                                 <label class="form-label" for="conSubject">Asunto *</label>
                                 <select id="conSubject" class="form-control" required>
                                     <option value="" disabled selected>Selecciona un motivo</option>
@@ -142,6 +147,7 @@ window.views.contact = {
                 
                 const name = document.getElementById("conName").value;
                 const email = document.getElementById("conEmail").value;
+                const phone = document.getElementById("conPhone").value;
                 const subjectVal = document.getElementById("conSubject").value;
                 const message = document.getElementById("conMessage").value;
                 
@@ -155,77 +161,26 @@ window.views.contact = {
                 const subject = subjectMap[subjectVal] || subjectVal;
 
                 // Guardar en base de datos local
-                window.state.addMessage({ name, email, subject, message, phone: "" });
-                window.components.showToast("Consulta registrada en nuestro buzón local", "success");
+                window.state.addMessage({ name, email, phone, subject, message });
+                window.components.showToast("Consulta enviada y registrada en el panel", "success");
 
                 // Configuración de destino
                 const settings = window.state.getContactSettings() || { email: "consultas@summerqueen.com", whatsapp: "5491122334455" };
 
-                // Mostrar modal para seleccionar canal de comunicación
-                const modal = document.createElement("div");
-                modal.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(5px); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;";
-                
-                modal.innerHTML = `
-                    <div style="background: var(--color-card); border: 1px solid var(--color-border); padding: 2.5rem 2rem; border-radius: var(--border-radius-lg); max-width: 480px; width: 90%; text-align: center; box-shadow: var(--shadow-lg); transform: scale(0.9); transition: transform 0.3s ease;">
-                        <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--color-success-bg); color: var(--color-success); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                        </div>
-                        <h3 style="font-family: var(--font-heading); font-size: 1.6rem; margin-bottom: 0.5rem;">¡Consulta Registrada!</h3>
-                        <p style="color: var(--color-text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">Hemos guardado tu consulta en el panel. Para agilizar la respuesta, elige cómo deseas enviarla ahora:</p>
-                        
-                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                            <button id="sendWaBtn" class="btn btn-block" style="background-color: #25d366; color: white; border: none; font-weight: 600; justify-content: center; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.8rem;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                                Enviar por WhatsApp
-                            </button>
-                            <button id="sendEmailBtn" class="btn btn-block btn-primary" style="justify-content: center; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.8rem;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                                Enviar por Correo Electrónico
-                            </button>
-                            <button id="closeContactModalBtn" class="btn btn-block btn-outline" style="justify-content: center; padding: 0.8rem; margin-top: 0.5rem;">
-                                Cerrar Ventana
-                            </button>
-                        </div>
-                    </div>
-                `;
-
-                document.body.appendChild(modal);
-
-                // Animar entrada
-                setTimeout(() => {
-                    modal.style.opacity = "1";
-                    modal.children[0].style.transform = "scale(1)";
-                }, 50);
-
                 // Configurar textos y links
-                const textWa = `Hola! Mi nombre es ${name} (${email}). Escribo por la consulta: "${subject}". Mensaje: ${message}`;
+                const textWa = `Hola! Mi nombre es ${name} (Tel: ${phone}, Email: ${email}). Escribo por la consulta: "${subject}". Mensaje: ${message}`;
                 const encodedText = encodeURIComponent(textWa);
                 const waUrl = `https://api.whatsapp.com/send?phone=${settings.whatsapp}&text=${encodedText}`;
 
                 const emailSubject = `Consulta de ${name} - ${subject}`;
-                const emailBody = `Nombre: ${name}\nEmail: ${email}\n\nMensaje:\n${message}`;
+                const emailBody = `Nombre: ${name}\nTeléfono: ${phone}\nEmail: ${email}\n\nMensaje:\n${message}`;
                 const mailtoUrl = `mailto:${settings.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
 
-                // Click handlers
-                modal.querySelector("#sendWaBtn").addEventListener("click", () => {
-                    window.open(waUrl, "_blank");
-                    closeModal();
-                });
-
-                modal.querySelector("#sendEmailBtn").addEventListener("click", () => {
-                    window.location.href = mailtoUrl;
-                    closeModal();
-                });
-
-                const closeModal = () => {
-                    modal.style.opacity = "0";
-                    modal.children[0].style.transform = "scale(0.9)";
-                    setTimeout(() => {
-                        modal.remove();
-                    }, 300);
-                };
-
-                modal.querySelector("#closeContactModalBtn").addEventListener("click", closeModal);
+                // Ejecutar envíos automáticos
+                // WhatsApp en pestaña nueva
+                window.open(waUrl, "_blank");
+                // Mailto en la ventana actual (no cambia la página, solo abre el cliente de correo)
+                window.location.href = mailtoUrl;
 
                 contactForm.reset();
             });

@@ -1187,15 +1187,25 @@ window.views.admin = {
         `;
 
         let tableRowsHtml = "";
+        
+        // Helper para normalizar el asunto
+        const mapSubject = (sub) => {
+            if (sub === "egresados") return "Presupuesto Ropa de Egresados";
+            if (sub === "mochilas") return "Consulta sobre Mochilas / Stock";
+            if (sub === "pedido") return "Consulta sobre un Pedido Realizado";
+            if (sub === "taller") return "Alianzas comerciales / Taller";
+            return sub; // Si ya viene en formato amigable
+        };
+
         if (messages.length === 0) {
-            tableRowsHtml = `<tr><td colspan="5" style="text-align: center; color: var(--color-text-muted); padding: 3rem;">El buzón de entrada está vacío.</td></tr>`;
+            tableRowsHtml = `<tr><td colspan="6" style="text-align: center; color: var(--color-text-muted); padding: 3rem;">El buzón de entrada está vacío.</td></tr>`;
         } else {
             const sortedMessages = [...messages].sort((a, b) => new Date(b.date) - new Date(a.date));
             sortedMessages.forEach(m => {
                 const msgDate = new Date(m.date).toLocaleDateString('es-AR', {
                     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
                 });
-                const subjectLabel = m.subject === "egresados" ? "Buzos Egresados" : m.subject === "mochilas" ? "Mochilas" : m.subject === "pedido" ? "Pedidos" : "Alianzas/Taller";
+                const subjectLabel = mapSubject(m.subject);
                 
                 tableRowsHtml += `
                     <tr style="${m.read ? '' : 'font-weight: 700; background-color: rgba(230, 126, 34, 0.05);'}">
@@ -1204,7 +1214,15 @@ window.views.admin = {
                         </td>
                         <td>
                             <strong>${m.name}</strong>
-                            <div style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 400;">${m.email}</div>
+                            <div style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 400;">
+                                ${m.email}
+                                ${m.phone ? `<br><span style="color: var(--color-primary); font-weight: 500; display: inline-flex; align-items: center; gap: 0.2rem; margin-top: 0.15rem;">📞 ${m.phone}</span>` : ''}
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-size: 0.85rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text-muted); cursor: pointer;" title="Haga clic para ver el mensaje completo" class="msg-text-preview" data-id="${m.id}">
+                                ${m.message}
+                            </div>
                         </td>
                         <td class="hide-mobile"><span class="status-badge" style="background-color: var(--color-bg-alt); color: var(--color-text-primary); font-size: 0.75rem;">${subjectLabel}</span></td>
                         <td class="hide-mobile" style="font-size: 0.85rem; color: var(--color-text-muted); font-weight: 400;">${msgDate} hs.</td>
@@ -1234,6 +1252,7 @@ window.views.admin = {
                             <tr>
                                 <th style="width: 90px;">Estado</th>
                                 <th>Remitente</th>
+                                <th>Mensaje</th>
                                 <th class="hide-mobile">Asunto</th>
                                 <th class="hide-mobile">Fecha</th>
                                 <th style="width: 100px;">Acciones</th>
@@ -1284,39 +1303,61 @@ window.views.admin = {
 
         const viewButtons = document.querySelectorAll(".view-msg-btn");
         const deleteButtons = document.querySelectorAll(".delete-msg-btn");
+        const textPreviews = document.querySelectorAll(".msg-text-preview");
         
         const modalOverlay = document.getElementById("messageModalOverlay");
         const modalBody = document.getElementById("messageModalBody");
         const closeBtn = document.getElementById("closeMessageModalBtn");
         const confirmBtn = document.getElementById("confirmMessageModalBtn");
 
+        // Helper para normalizar el asunto
+        const mapSubject = (sub) => {
+            if (sub === "egresados") return "Presupuesto Ropa de Egresados";
+            if (sub === "mochilas") return "Consulta sobre Mochilas / Stock";
+            if (sub === "pedido") return "Consulta sobre un Pedido Realizado";
+            if (sub === "taller") return "Alianzas comerciales / Taller";
+            return sub;
+        };
+
+        const openMessageModal = (id) => {
+            const messages = window.state.getMessages();
+            const msg = messages.find(m => m.id === id);
+
+            if (msg) {
+                window.state.markMessageAsRead(id);
+                this.updateUnreadMessagesBadge();
+
+                const msgDate = new Date(msg.date).toLocaleString('es-AR');
+                const subjectLabel = mapSubject(msg.subject);
+                
+                modalBody.innerHTML = `
+                    <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); padding-bottom: 1rem;">
+                        <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>De:</strong> ${msg.name} (&lt;${msg.email}&gt;)</p>
+                        ${msg.phone ? `<p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Teléfono:</strong> ${msg.phone}</p>` : ''}
+                        <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Fecha:</strong> ${msgDate} hs.</p>
+                        <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Asunto:</strong> ${subjectLabel}</p>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem; font-size: 1rem; color: var(--color-primary);">Consulta:</h4>
+                        <div style="background: var(--color-bg-alt); padding: 1rem; border-radius: var(--border-radius-sm); border: 1px solid var(--color-border); white-space: pre-wrap; font-size: 0.95rem; line-height: 1.5; text-align: left;">${msg.message}</div>
+                    </div>
+                `;
+
+                modalOverlay.classList.add("active");
+            }
+        };
+
         viewButtons.forEach(btn => {
             btn.addEventListener("click", () => {
                 const id = btn.getAttribute("data-id");
-                const messages = window.state.getMessages();
-                const msg = messages.find(m => m.id === id);
+                openMessageModal(id);
+            });
+        });
 
-                if (msg) {
-                    window.state.markMessageAsRead(id);
-                    this.updateUnreadMessagesBadge();
-
-                    const msgDate = new Date(msg.date).toLocaleString('es-AR');
-                    const subjectLabel = msg.subject === "egresados" ? "Buzos Egresados" : msg.subject === "mochilas" ? "Mochilas" : msg.subject === "pedido" ? "Pedidos" : "Alianzas/Taller";
-                    
-                    modalBody.innerHTML = `
-                        <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); padding-bottom: 1rem;">
-                            <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>De:</strong> ${msg.name} (&lt;${msg.email}&gt;)</p>
-                            <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Fecha:</strong> ${msgDate} hs.</p>
-                            <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Asunto:</strong> ${subjectLabel}</p>
-                        </div>
-                        <div>
-                            <h4 style="margin-bottom: 0.5rem; font-size: 1rem; color: var(--color-primary);">Consulta:</h4>
-                            <div style="background: var(--color-bg-alt); padding: 1rem; border-radius: var(--border-radius-sm); border: 1px solid var(--color-border); white-space: pre-wrap; font-size: 0.95rem; line-height: 1.5; text-align: left;">${msg.message}</div>
-                        </div>
-                    `;
-
-                    modalOverlay.classList.add("active");
-                }
+        textPreviews.forEach(el => {
+            el.addEventListener("click", () => {
+                const id = el.getAttribute("data-id");
+                openMessageModal(id);
             });
         });
 
