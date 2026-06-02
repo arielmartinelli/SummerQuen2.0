@@ -149,6 +149,27 @@ window.views.admin = {
                                     </select>
                                 </div>
                             </div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="checkbox-label" style="margin-top: 1.8rem; display: flex; align-items: center; gap: 0.5rem;">
+                                        <input type="checkbox" id="prodOnSale">
+                                        ¿Aplicar Oferta?
+                                    </label>
+                                </div>
+                                <div class="form-group" id="prodSalePriceGroup" style="display: none;">
+                                    <label class="form-label" for="prodSalePrice">Precio de Oferta ($) *</label>
+                                    <input type="number" id="prodSalePrice" class="form-control" placeholder="19600" min="0">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="prodImageFile">Foto del Producto (Dejar vacío para usar predeterminada)</label>
+                                <input type="file" id="prodImageFile" class="form-control" accept="image/*" style="padding: 0.4rem 0.6rem;">
+                                <div id="prodImagePreviewContainer" style="margin-top: 0.5rem; display: none; align-items: center; gap: 1rem;">
+                                    <img id="prodImagePreview" src="" alt="Vista previa" style="width: 60px; height: 60px; object-fit: cover; border-radius: var(--border-radius-sm); border: 1px solid var(--color-border);">
+                                    <span style="font-size: 0.8rem; color: var(--color-text-muted);">Imagen cargada</span>
+                                </div>
+                                <input type="hidden" id="prodImageBase64">
+                            </div>
                             <div class="form-group">
                                 <label class="form-label" for="prodDesc">Descripción Detallada *</label>
                                 <textarea id="prodDesc" class="form-control" rows="3" placeholder="Detalles de materiales y confección..." required></textarea>
@@ -218,17 +239,72 @@ window.views.admin = {
             }
         });
 
-        // Eventos del Modal
-        const modalOverlay = document.getElementById("productModalOverlay");
-        const closeModalBtn = document.getElementById("closeProductModalBtn");
-        const cancelBtn = document.getElementById("cancelProductBtn");
-        const crudForm = document.getElementById("productCrudForm");
-
         const closeModal = () => {
             modalOverlay.classList.remove("active");
             crudForm.reset();
             this.editingProductId = null;
+            
+            // Limpiar inputs agregados y vista previa
+            document.getElementById("prodImageBase64").value = "";
+            document.getElementById("prodImagePreviewContainer").style.display = "none";
+            document.getElementById("prodImageFile").value = "";
+            
+            document.getElementById("prodSalePriceGroup").style.display = "none";
+            const salePriceInput = document.getElementById("prodSalePrice");
+            salePriceInput.value = "";
+            salePriceInput.disabled = true;
+            salePriceInput.required = false;
         };
+
+        // Escuchar subida de archivo para la foto
+        const fileInput = document.getElementById("prodImageFile");
+        const base64Input = document.getElementById("prodImageBase64");
+        const previewContainer = document.getElementById("prodImagePreviewContainer");
+        const previewImage = document.getElementById("prodImagePreview");
+
+        fileInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 2 * 1024 * 1024) { // Limitado a 2MB
+                    window.components.showToast("La imagen debe ser menor a 2MB para no exceder almacenamiento", "error");
+                    fileInput.value = "";
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const base64 = evt.target.result;
+                    base64Input.value = base64;
+                    previewImage.src = base64;
+                    previewContainer.style.display = "flex";
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Escuchar checkbox de Oferta para habilitar el input de precio correspondiente
+        const onSaleCheckbox = document.getElementById("prodOnSale");
+        const salePriceGroup = document.getElementById("prodSalePriceGroup");
+        const salePriceInput = document.getElementById("prodSalePrice");
+
+        onSaleCheckbox.addEventListener("change", (e) => {
+            if (e.target.checked) {
+                salePriceGroup.style.display = "block";
+                salePriceInput.disabled = false;
+                salePriceInput.required = true;
+                // Sugerir un precio con descuento del 20% si está vacío
+                if (!salePriceInput.value) {
+                    const originalPrice = parseFloat(document.getElementById("prodPrice").value) || 0;
+                    if (originalPrice > 0) {
+                        salePriceInput.value = Math.round(originalPrice * 0.80);
+                    }
+                }
+            } else {
+                salePriceGroup.style.display = "none";
+                salePriceInput.disabled = true;
+                salePriceInput.required = false;
+                salePriceInput.value = "";
+            }
+        });
 
         closeModalBtn.addEventListener("click", closeModal);
         cancelBtn.addEventListener("click", closeModal);
@@ -459,6 +535,18 @@ window.views.admin = {
         addBtn.addEventListener("click", () => {
             modalTitle.textContent = "Nuevo Producto";
             this.editingProductId = null;
+            
+            // Limpiar inputs adicionales
+            document.getElementById("prodImageBase64").value = "";
+            document.getElementById("prodImagePreviewContainer").style.display = "none";
+            document.getElementById("prodImageFile").value = "";
+            
+            document.getElementById("prodOnSale").checked = false;
+            document.getElementById("prodSalePriceGroup").style.display = "none";
+            document.getElementById("prodSalePrice").value = "";
+            document.getElementById("prodSalePrice").disabled = true;
+            document.getElementById("prodSalePrice").required = false;
+
             modalOverlay.classList.add("active");
         });
 
@@ -481,6 +569,33 @@ window.views.admin = {
                     document.getElementById("prodMaterials").value = prod.materials || "";
                     document.getElementById("prodColors").value = prod.colors ? prod.colors.join(", ") : "";
                     document.getElementById("prodSizes").value = prod.sizes ? prod.sizes.join(", ") : "";
+
+                    // Cargar estado de oferta
+                    const onSale = !!prod.onSale;
+                    document.getElementById("prodOnSale").checked = onSale;
+                    const salePriceGroup = document.getElementById("prodSalePriceGroup");
+                    const salePriceInput = document.getElementById("prodSalePrice");
+                    if (onSale) {
+                        salePriceGroup.style.display = "block";
+                        salePriceInput.value = prod.salePrice || "";
+                        salePriceInput.disabled = false;
+                        salePriceInput.required = true;
+                    } else {
+                        salePriceGroup.style.display = "none";
+                        salePriceInput.value = "";
+                        salePriceInput.disabled = true;
+                        salePriceInput.required = false;
+                    }
+
+                    // Cargar vista previa de foto actual
+                    if (prod.image) {
+                        document.getElementById("prodImageBase64").value = prod.image;
+                        document.getElementById("prodImagePreview").src = prod.image;
+                        document.getElementById("prodImagePreviewContainer").style.display = "flex";
+                    } else {
+                        document.getElementById("prodImageBase64").value = "";
+                        document.getElementById("prodImagePreviewContainer").style.display = "none";
+                    }
 
                     modalOverlay.classList.add("active");
                 }
@@ -507,17 +622,21 @@ window.views.admin = {
         // Capturar datos del formulario
         const colorVal = document.getElementById("prodColors").value;
         const sizeVal = document.getElementById("prodSizes").value;
+        const onSale = document.getElementById("prodOnSale").checked;
 
         const productData = {
             title: document.getElementById("prodTitle").value,
             category: document.getElementById("prodCategory").value,
             price: parseFloat(document.getElementById("prodPrice").value),
+            onSale: onSale,
+            salePrice: onSale ? parseFloat(document.getElementById("prodSalePrice").value) : 0,
             stock: parseInt(document.getElementById("prodStock").value),
             featured: document.getElementById("prodFeatured").value === "true",
             description: document.getElementById("prodDesc").value,
             materials: document.getElementById("prodMaterials").value,
             colors: colorVal ? colorVal.split(",").map(c => c.trim()) : [],
-            sizes: sizeVal ? sizeVal.split(",").map(s => s.trim()) : []
+            sizes: sizeVal ? sizeVal.split(",").map(s => s.trim()) : [],
+            image: document.getElementById("prodImageBase64").value || ""
         };
 
         if (this.editingProductId) {

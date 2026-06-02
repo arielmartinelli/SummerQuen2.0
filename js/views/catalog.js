@@ -10,7 +10,8 @@ window.views.catalog = {
             categories: query && query.category ? [query.category] : [],
             colors: [],
             maxPrice: 40000,
-            sortBy: "featured"
+            sortBy: "featured",
+            onlyOnSale: (query && (query.filter === "sale" || query.onlyOnSale === "true")) ? true : false
         };
 
         // Encontrar precios máximos y mínimos de semillas para el slider
@@ -39,6 +40,17 @@ window.views.catalog = {
                                 <label class="checkbox-label">
                                     <input type="checkbox" class="cat-filter" value="accesorios" ${this.activeFilters.categories.includes("accesorios") ? "checked" : ""}>
                                     Accesorios
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Promociones -->
+                        <div class="filter-section">
+                            <h4 class="filter-title">Promociones</h4>
+                            <div class="filter-options">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="saleFilter" ${this.activeFilters.onlyOnSale ? "checked" : ""}>
+                                    Solo Ofertas
                                 </label>
                             </div>
                         </div>
@@ -168,6 +180,15 @@ window.views.catalog = {
             });
         });
 
+        // Evento Solo Ofertas
+        const saleFilter = document.getElementById("saleFilter");
+        if (saleFilter) {
+            saleFilter.addEventListener("change", (e) => {
+                this.activeFilters.onlyOnSale = e.target.checked;
+                this.filterAndRenderProducts();
+            });
+        }
+
         // Evento Limpiar Filtros
         clearBtn.addEventListener("click", () => {
             // Resetear inputs de la UI
@@ -178,6 +199,7 @@ window.views.catalog = {
             
             document.querySelectorAll(".cat-filter").forEach(cb => cb.checked = false);
             document.querySelectorAll(".col-filter").forEach(s => s.classList.remove("active"));
+            if (saleFilter) saleFilter.checked = false;
 
             // Resetear estado del filtro
             this.activeFilters = {
@@ -185,7 +207,8 @@ window.views.catalog = {
                 categories: [],
                 colors: [],
                 maxPrice: absoluteMaxPrice,
-                sortBy: "featured"
+                sortBy: "featured",
+                onlyOnSale: false
             };
 
             this.filterAndRenderProducts();
@@ -212,8 +235,16 @@ window.views.catalog = {
             filtered = filtered.filter(p => this.activeFilters.categories.includes(p.category));
         }
 
+        // 2.5 Filtrar por Ofertas
+        if (this.activeFilters.onlyOnSale) {
+            filtered = filtered.filter(p => p.onSale && p.salePrice > 0);
+        }
+
         // 3. Filtrar por Precio
-        filtered = filtered.filter(p => p.price <= this.activeFilters.maxPrice);
+        filtered = filtered.filter(p => {
+            const currentPrice = (p.onSale && p.salePrice > 0) ? p.salePrice : p.price;
+            return currentPrice <= this.activeFilters.maxPrice;
+        });
 
         // 4. Filtrar por Colores (si el producto contiene alguno de los colores seleccionados)
         if (this.activeFilters.colors.length > 0) {
