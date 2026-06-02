@@ -73,10 +73,10 @@ window.views.admin = {
     renderDashboardLayout: function(container) {
         container.innerHTML = `
             <div class="container admin-view">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+                <div class="admin-header-row">
                     <div>
-                        <h1 style="font-family: var(--font-heading); font-size: 2.5rem;">Administración</h1>
-                        <p style="color: var(--color-text-muted); font-size: 0.95rem;">Gestiona tus productos, pedidos, clientes y reportes de confección.</p>
+                        <h1 style="font-family: var(--font-heading); font-size: 2.5rem; margin: 0;">Administración</h1>
+                        <p style="color: var(--color-text-muted); font-size: 0.95rem; margin-top: 0.25rem;">Gestiona tus productos, pedidos, clientes y reportes de confección.</p>
                     </div>
                     <button class="btn btn-outline btn-sm" id="adminLogoutBtn">
                         Cerrar Sesión <i data-lucide="log-out" style="width: 14px; height: 14px;"></i>
@@ -271,17 +271,22 @@ window.views.admin = {
         fileInput.addEventListener("change", (e) => {
             const file = e.target.files[0];
             if (file) {
+                window.components.showToast(`Archivo seleccionado: ${file.name} (${Math.round(file.size / 1024)} KB)`, "info");
                 if (file.size > 2 * 1024 * 1024) { // Limitado a 2MB
                     window.components.showToast("La imagen debe ser menor a 2MB para no exceder almacenamiento", "error");
                     fileInput.value = "";
                     return;
                 }
                 const reader = new FileReader();
+                reader.onerror = () => {
+                    window.components.showToast("Error al leer el archivo de imagen", "error");
+                };
                 reader.onload = (evt) => {
                     const base64 = evt.target.result;
                     base64Input.value = base64;
                     previewImage.src = base64;
                     previewContainer.style.display = "flex";
+                    window.components.showToast("¡Imagen procesada y cargada con éxito!", "success");
                 };
                 reader.readAsDataURL(file);
             }
@@ -476,7 +481,7 @@ window.views.admin = {
                         <strong>${p.title}</strong>
                         <div style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase;">ID: ${p.id}</div>
                     </td>
-                    <td><span class="status-badge" style="background-color: var(--color-primary-light); color: var(--color-primary);">${p.category}</span></td>
+                    <td class="hide-mobile"><span class="status-badge" style="background-color: var(--color-primary-light); color: var(--color-primary);">${p.category}</span></td>
                     <td><strong>${formatter.format(p.price)}</strong></td>
                     <td>
                         <span style="font-weight: 600; color: ${p.stock <= 5 ? 'var(--color-danger)' : 'inherit'}">
@@ -511,7 +516,7 @@ window.views.admin = {
                             <tr>
                                 <th>Imagen</th>
                                 <th>Nombre</th>
-                                <th>Categoría</th>
+                                <th class="hide-mobile">Categoría</th>
                                 <th>Precio</th>
                                 <th>Stock</th>
                                 <th>Acciones</th>
@@ -629,6 +634,9 @@ window.views.admin = {
         const colorVal = document.getElementById("prodColors").value;
         const sizeVal = document.getElementById("prodSizes").value;
         const onSale = document.getElementById("prodOnSale").checked;
+        const base64Value = document.getElementById("prodImageBase64").value;
+
+        window.components.showToast(`Guardando... Imagen en Base64: ${base64Value ? "Sí (" + Math.round(base64Value.length / 1024) + " KB)" : "No"}`, "info");
 
         const productData = {
             title: document.getElementById("prodTitle").value,
@@ -642,7 +650,7 @@ window.views.admin = {
             materials: document.getElementById("prodMaterials").value,
             colors: colorVal ? colorVal.split(",").map(c => c.trim()) : [],
             sizes: sizeVal ? sizeVal.split(",").map(s => s.trim()) : [],
-            image: document.getElementById("prodImageBase64").value || ""
+            image: base64Value || ""
         };
 
         if (this.editingProductId) {
@@ -681,8 +689,8 @@ window.views.admin = {
                         <strong>${o.client.name}</strong>
                         <div style="font-size: 0.8rem; color: var(--color-text-muted);">${o.client.email}</div>
                     </td>
-                    <td>${orderDate} hs.</td>
-                    <td>
+                    <td class="hide-mobile">${orderDate} hs.</td>
+                    <td class="hide-mobile">
                         <span style="font-size: 0.8rem;">
                             ${o.paymentMethod === "credit_card" ? "💳 Tarjeta" : o.paymentMethod === "bank_transfer" ? "🏛️ Transf." : "🌐 PayPal"}
                         </span>
@@ -716,8 +724,8 @@ window.views.admin = {
                             <tr>
                                 <th>Orden</th>
                                 <th>Cliente</th>
-                                <th>Fecha</th>
-                                <th>Pago</th>
+                                <th class="hide-mobile">Fecha</th>
+                                <th class="hide-mobile">Pago</th>
                                 <th>Total</th>
                                 <th>Estado</th>
                                 <th>Acción</th>
@@ -851,7 +859,7 @@ window.views.admin = {
                             ${u.role === 'admin' ? 'Administrador' : 'Cliente'}
                         </span>
                     </td>
-                    <td>${regDate}</td>
+                    <td class="hide-mobile">${regDate}</td>
                 </tr>
             `;
         });
@@ -868,7 +876,7 @@ window.views.admin = {
                                 <th>Nombre</th>
                                 <th>Email</th>
                                 <th>Rol / Rango</th>
-                                <th>Fecha Registro</th>
+                                <th class="hide-mobile">Fecha Registro</th>
                             </tr>
                         </thead>
                         <tbody>

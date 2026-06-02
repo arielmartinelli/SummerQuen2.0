@@ -338,13 +338,19 @@ class StateManager {
         const products = this.getProducts();
         const index = products.findIndex(p => p.id === updatedProduct.id);
         if (index !== -1) {
+            const oldImage = products[index].image;
             // Preservar imágenes viejas si el formulario no las actualiza
-            if (!updatedProduct.image && products[index].image) {
-                updatedProduct.image = products[index].image;
+            if (!updatedProduct.image && oldImage) {
+                updatedProduct.image = oldImage;
             }
-            if ((!updatedProduct.images || updatedProduct.images.length === 0) && products[index].images) {
+            
+            // Si la imagen principal cambió, actualizar la galería con la nueva imagen
+            if (updatedProduct.image && updatedProduct.image !== oldImage) {
+                updatedProduct.images = [updatedProduct.image];
+            } else if ((!updatedProduct.images || updatedProduct.images.length === 0) && products[index].images) {
                 updatedProduct.images = products[index].images;
             }
+
             updatedProduct.onSale = !!updatedProduct.onSale;
             updatedProduct.salePrice = parseFloat(updatedProduct.salePrice) || 0;
             

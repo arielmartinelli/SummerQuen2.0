@@ -1222,3 +1222,101 @@
     margin-bottom: 2rem;
     font-size: 0.95rem;
 }
+
+/* ==========================================================================
+   7. RESPONSIVE MOBILE ADJUSTMENTS (ADMIN PANEL)
+   ========================================================================== */
+.admin-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .hide-mobile {
+        display: none !important;
+    }
+
+    .admin-header-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1.2rem;
+        text-align: center;
+    }
+
+    .admin-header-row h1 {
+        font-size: 2rem !important;
+    }
+
+    .admin-header-row p {
+        font-size: 0.85rem !important;
+    }
+
+    .admin-header-row button {
+        align-self: center;
+        width: 100%;
+    }
+
+    /* Navegación horizontal deslizable con tacto nativo */
+    .admin-nav {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        padding: 0.6rem !important;
+        gap: 0.5rem !important;
+        -webkit-overflow-scrolling: touch;
+        border-radius: var(--border-radius-md) !important;
+    }
+
+    .admin-nav-btn {
+        flex-shrink: 0 !important;
+        flex-grow: 0 !important;
+        padding: 0.6rem 1rem !important;
+        font-size: 0.85rem !important;
+        white-space: nowrap !important;
+        justify-content: center !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .admin-login-card {
+        margin: 3rem 1rem !important;
+        padding: 2rem 1.5rem !important;
+    }
+
+    .admin-stats-grid {
+        gap: 1rem !important;
+        margin-bottom: 2rem !important;
+    }
+
+    .admin-stat-card {
+        padding: 1.2rem !important;
+    }
+
+    .stat-info .stat-value {
+        font-size: 1.5rem !important;
+    }
+
+    .bar-chart-sim {
+        gap: 0.6rem !important;
+        height: 200px !important;
+        overflow-x: auto !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    .bar-col {
+        min-width: 45px !important;
+    }
+
+    .bar-val {
+        font-size: 0.65rem !important;
+    }
+
+    .bar-lbl {
+        font-size: 0.7rem !important;
+    }
+}
