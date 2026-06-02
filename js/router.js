@@ -15,10 +15,17 @@ class Router {
         };
 
         window.addEventListener('hashchange', () => this.handleRouting());
-        window.addEventListener('DOMContentLoaded', () => {
-            this.handleRouting();
-            this.initGlobalEvents();
-        });
+        
+        if (document.readyState === 'loading') {
+            window.addEventListener('DOMContentLoaded', () => this.init());
+        } else {
+            this.init();
+        }
+    }
+
+    init() {
+        this.handleRouting();
+        this.initGlobalEvents();
     }
 
     // Navegar programáticamente
@@ -201,7 +208,5 @@ class Router {
     }
 }
 
-// Inicializar el router en un objeto temporal, se montará al cargar las vistas
-window.addEventListener('DOMContentLoaded', () => {
-    window.router = new Router();
-});
+// Inicializar el router directamente
+window.router = new Router();
