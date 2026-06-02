@@ -4,7 +4,7 @@
 
 window.views.contact = {
     render: function(container, param, query) {
-        const settings = window.state.getContactSettings() || { email: "consultas@summerqueen.com", whatsapp: "5491122334455" };
+        const settings = window.state.getContactSettings() || { email: "arielmartinelli2019@gmail.com", whatsapp: "5493516121498" };
 
         container.innerHTML = `
             <div class="container contact-view">
@@ -165,7 +165,7 @@ window.views.contact = {
                 window.components.showToast("Consulta enviada y registrada en el panel", "success");
 
                 // Configuración de destino
-                const settings = window.state.getContactSettings() || { email: "consultas@summerqueen.com", whatsapp: "5491122334455" };
+                const settings = window.state.getContactSettings() || { email: "arielmartinelli2019@gmail.com", whatsapp: "5493516121498" };
 
                 // Configurar textos y links
                 const textWa = `Hola! Mi nombre es ${name} (Tel: ${phone}, Email: ${email}). Escribo por la consulta: "${subject}". Mensaje: ${message}`;

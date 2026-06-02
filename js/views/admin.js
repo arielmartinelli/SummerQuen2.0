@@ -1163,7 +1163,7 @@ window.views.admin = {
 
     renderTabMessages: function(element) {
         const messages = window.state.getMessages();
-        const settings = window.state.getContactSettings() || { email: "consultas@summerqueen.com", whatsapp: "5491122334455" };
+        const settings = window.state.getContactSettings() || { email: "arielmartinelli2019@gmail.com", whatsapp: "5493516121498" };
 
         const configHtml = `
             <div class="admin-table-container" style="margin-bottom: 2rem; padding: 1.5rem; background-color: var(--color-card); border-radius: var(--border-radius-lg); border: 1px solid var(--color-border);">

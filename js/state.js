@@ -318,6 +318,16 @@ class StateManager {
             localStorage.setItem("sq_db_version_4", "true");
         }
 
+        // Migración a versión 5 (actualización global del número de whatsapp y correo electrónico predeterminados)
+        if (!localStorage.getItem("sq_db_version_5")) {
+            const updatedSettings = {
+                email: "arielmartinelli2019@gmail.com",
+                whatsapp: "5493516121498"
+            };
+            localStorage.setItem("sq_settings", JSON.stringify(updatedSettings));
+            localStorage.setItem("sq_db_version_5", "true");
+        }
+
         // Inicializar Productos
         if (!localStorage.getItem("sq_products")) {
             localStorage.setItem("sq_products", JSON.stringify(SEED_PRODUCTS));
@@ -341,8 +351,8 @@ class StateManager {
         // Inicializar Configuración de Contacto
         if (!localStorage.getItem("sq_settings")) {
             const defaultSettings = {
-                email: "consultas@summerqueen.com",
-                whatsapp: "5491122334455"
+                email: "arielmartinelli2019@gmail.com",
+                whatsapp: "5493516121498"
             };
             localStorage.setItem("sq_settings", JSON.stringify(defaultSettings));
         }
