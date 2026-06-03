@@ -22,7 +22,8 @@ const supabase = {
             ...options.headers
         };
         try {
-            const response = await fetch(`${this.url}/rest/v1/${path}`, {
+            const baseUrl = this.url.endsWith('/') ? this.url.slice(0, -1) : this.url;
+            const response = await fetch(`${baseUrl}/rest/v1/${path}`, {
                 ...options,
                 headers
             });
