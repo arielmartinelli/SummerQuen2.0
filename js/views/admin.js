@@ -477,6 +477,11 @@ window.views.admin = {
             }
         });
 
+        // Sincronizar datos con Supabase en segundo plano al cambiar de pestaña
+        if (window.state && typeof window.state.syncFromCloud === "function") {
+            window.state.syncFromCloud().catch(err => console.error("Error en sincronización en segundo plano:", err));
+        }
+
         if (tabName === "dashboard") {
             this.renderTabDashboard(tabContentEl);
         } else if (tabName === "products") {
