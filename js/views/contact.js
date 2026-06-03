@@ -167,20 +167,13 @@ window.views.contact = {
                 // Configuración de destino
                 const settings = window.state.getContactSettings() || { email: "arielmartinelli2019@gmail.com", whatsapp: "5493516121498" };
 
-                // Configurar textos y links
+                // Configurar texto y link de WhatsApp
                 const textWa = `Hola! Mi nombre es ${name} (Tel: ${phone}, Email: ${email}). Escribo por la consulta: "${subject}". Mensaje: ${message}`;
                 const encodedText = encodeURIComponent(textWa);
                 const waUrl = `https://api.whatsapp.com/send?phone=${settings.whatsapp}&text=${encodedText}`;
 
-                const emailSubject = `Consulta de ${name} - ${subject}`;
-                const emailBody = `Nombre: ${name}\nTeléfono: ${phone}\nEmail: ${email}\n\nMensaje:\n${message}`;
-                const mailtoUrl = `mailto:${settings.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-
-                // Ejecutar envíos automáticos
-                // WhatsApp en pestaña nueva
+                // Ejecutar envío automático a WhatsApp en pestaña nueva
                 window.open(waUrl, "_blank");
-                // Mailto en la ventana actual (no cambia la página, solo abre el cliente de correo)
-                window.location.href = mailtoUrl;
 
                 contactForm.reset();
             });

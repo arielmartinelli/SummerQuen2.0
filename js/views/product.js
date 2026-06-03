@@ -65,13 +65,26 @@ window.views.product = {
         // Estilos para galería
         const mainImage = (initialVariant && initialVariant.image) ? initialVariant.image : product.image;
         
-        // Reunir todas las imágenes únicas de variantes para la galería de miniaturas
+        // Reunir todas las imágenes del producto y de variantes para la galería
         let allImages = [];
-        if (product.variants && product.variants.length > 0) {
-            allImages = [...new Set(product.variants.map(v => v.image).filter(Boolean))];
+        if (product.images && product.images.length > 0) {
+            allImages = [...product.images];
+        } else if (product.image) {
+            allImages = [product.image];
         }
-        if (allImages.length === 0) {
-            allImages = product.images || [mainImage];
+
+        // Añadir imágenes de variantes únicas que no estén ya en allImages
+        if (product.variants && product.variants.length > 0) {
+            const variantImages = product.variants.map(v => v.image).filter(Boolean);
+            variantImages.forEach(img => {
+                if (!allImages.includes(img)) {
+                    allImages.push(img);
+                }
+            });
+        }
+
+        if (allImages.length === 0 && mainImage) {
+            allImages = [mainImage];
         }
 
         // Construir HTML de la galería de miniaturas

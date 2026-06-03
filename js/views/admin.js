@@ -165,13 +165,18 @@ window.views.admin = {
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="prodImageFile">Foto del Producto (Dejar vacío para usar predeterminada)</label>
-                                <input type="file" id="prodImageFile" class="form-control" accept="image/*" style="padding: 0.4rem 0.6rem;">
-                                <div id="prodImagePreviewContainer" style="margin-top: 0.5rem; display: none; align-items: center; gap: 1rem;">
-                                    <img id="prodImagePreview" src="" alt="Vista previa" style="width: 60px; height: 60px; object-fit: cover; border-radius: var(--border-radius-sm); border: 1px solid var(--color-border);">
-                                    <span style="font-size: 0.8rem; color: var(--color-text-muted);">Imagen cargada</span>
+                                <label class="form-label" style="font-weight: 600;">Fotos del Producto (Hasta 6 fotos. La 1ra será la Portada)</label>
+                                <div class="gallery-upload-container" style="border: 2px dashed var(--color-border); border-radius: var(--border-radius-md); padding: 1.25rem; text-align: center; background-color: var(--color-bg-alt); position: relative; cursor: pointer; transition: border-color 0.2s, background-color 0.2s;">
+                                    <input type="file" id="prodGalleryFileInput" class="form-control" accept="image/*" multiple style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2;">
+                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; color: var(--color-text-muted);">
+                                        <i data-lucide="image" style="width: 24px; height: 24px; color: var(--color-primary);"></i>
+                                        <span id="prodGalleryUploadText" style="font-size: 0.85rem; font-weight: 500;">Hacé clic o arrastrá para subir fotos</span>
+                                        <span style="font-size: 0.75rem;">(Máx. 6 fotos - Menores a 2MB cada una)</span>
+                                    </div>
                                 </div>
-                                <input type="hidden" id="prodImageBase64">
+                                <div id="prodGalleryPreviews" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
+                                    <!-- Miniaturas de fotos cargadas -->
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="prodDesc">Descripción Detallada *</label>
@@ -270,9 +275,8 @@ window.views.admin = {
             this.editingProductId = null;
             
             // Limpiar inputs agregados y vista previa
-            document.getElementById("prodImageBase64").value = "";
-            document.getElementById("prodImagePreviewContainer").style.display = "none";
-            document.getElementById("prodImageFile").value = "";
+            this.uploadedImages = [];
+            this.renderGalleryPreviews();
             
             document.getElementById("prodSalePriceGroup").style.display = "none";
             const salePriceInput = document.getElementById("prodSalePrice");
@@ -296,35 +300,54 @@ window.views.admin = {
             });
         }
 
-        // Escuchar subida de archivo para la foto
-        const fileInput = document.getElementById("prodImageFile");
-        const base64Input = document.getElementById("prodImageBase64");
-        const previewContainer = document.getElementById("prodImagePreviewContainer");
-        const previewImage = document.getElementById("prodImagePreview");
+        // Escuchar subida de archivo para la foto (Galería múltiple de hasta 6 fotos)
+        const fileInput = document.getElementById("prodGalleryFileInput");
 
-        fileInput.addEventListener("change", (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                window.components.showToast(`Archivo seleccionado: ${file.name} (${Math.round(file.size / 1024)} KB)`, "info");
-                if (file.size > 2 * 1024 * 1024) { // Limitado a 2MB
-                    window.components.showToast("La imagen debe ser menor a 2MB para no exceder almacenamiento", "error");
+        if (fileInput) {
+            fileInput.addEventListener("change", async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                if (!this.uploadedImages) {
+                    this.uploadedImages = [];
+                }
+
+                const remainingSlots = 6 - this.uploadedImages.length;
+                if (remainingSlots <= 0) {
+                    window.components.showToast("Ya has cargado el límite de 6 fotos", "error");
                     fileInput.value = "";
                     return;
                 }
-                const reader = new FileReader();
-                reader.onerror = () => {
-                    window.components.showToast("Error al leer el archivo de imagen", "error");
-                };
-                reader.onload = (evt) => {
-                    const base64 = evt.target.result;
-                    base64Input.value = base64;
-                    previewImage.src = base64;
-                    previewContainer.style.display = "flex";
-                    window.components.showToast("¡Imagen procesada y cargada con éxito!", "success");
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+
+                // Limitar la selección a los espacios disponibles
+                const filesToProcess = files.slice(0, remainingSlots);
+                if (files.length > remainingSlots) {
+                    window.components.showToast(`Solo se procesarán las primeras ${remainingSlots} imágenes (límite de 6)`, "warning");
+                }
+
+                for (const file of filesToProcess) {
+                    if (file.size > 2 * 1024 * 1024) { // Límite de 2MB por imagen
+                        window.components.showToast(`La imagen "${file.name}" supera los 2MB y no se cargará`, "error");
+                        continue;
+                    }
+
+                    try {
+                        const base64 = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = (evt) => resolve(evt.target.result);
+                            reader.onerror = () => reject(new Error("Error al leer el archivo"));
+                            reader.readAsDataURL(file);
+                        });
+                        this.uploadedImages.push(base64);
+                    } catch (err) {
+                        window.components.showToast(`Error al cargar la imagen "${file.name}"`, "error");
+                    }
+                }
+
+                fileInput.value = ""; // Resetear input
+                this.renderGalleryPreviews();
+            });
+        }
 
         // Escuchar checkbox de Oferta para habilitar el input de precio correspondiente
         const onSaleCheckbox = document.getElementById("prodOnSale");
@@ -358,6 +381,85 @@ window.views.admin = {
             e.preventDefault();
             this.handleProductSubmit(closeModal);
         });
+    },
+
+    renderGalleryPreviews: function() {
+        const previewContainer = document.getElementById("prodGalleryPreviews");
+        if (!previewContainer) return;
+
+        previewContainer.innerHTML = "";
+        
+        if (!this.uploadedImages) {
+            this.uploadedImages = [];
+        }
+        
+        this.uploadedImages.forEach((base64, index) => {
+            const isCover = index === 0;
+            const card = document.createElement("div");
+            card.className = "gallery-preview-card";
+            card.style.cssText = "position: relative; border-radius: var(--border-radius-sm); border: 1px solid var(--color-border); overflow: hidden; padding-top: 100%; height: 0; background-color: var(--color-bg-alt);";
+            
+            const img = document.createElement("img");
+            img.src = base64;
+            img.alt = `Foto ${index + 1}`;
+            img.style.cssText = "position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;";
+            card.appendChild(img);
+
+            // Cover badge / button
+            if (isCover) {
+                const badge = document.createElement("span");
+                badge.textContent = "Portada";
+                badge.style.cssText = "position: absolute; bottom: 4px; left: 4px; background-color: var(--color-primary); color: white; font-size: 0.65rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; z-index: 5;";
+                card.appendChild(badge);
+            } else {
+                const coverBtn = document.createElement("button");
+                coverBtn.type = "button";
+                coverBtn.textContent = "Portada";
+                coverBtn.title = "Hacer portada";
+                coverBtn.style.cssText = "position: absolute; bottom: 4px; left: 4px; background-color: rgba(0,0,0,0.6); color: white; font-size: 0.65rem; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer; transition: background 0.2s; z-index: 5;";
+                coverBtn.addEventListener("mouseover", () => coverBtn.style.backgroundColor = "var(--color-primary)");
+                coverBtn.addEventListener("mouseout", () => coverBtn.style.backgroundColor = "rgba(0,0,0,0.6)");
+                coverBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    const targetImg = this.uploadedImages.splice(index, 1)[0];
+                    this.uploadedImages.unshift(targetImg);
+                    this.renderGalleryPreviews();
+                });
+                card.appendChild(coverBtn);
+            }
+
+            // Remove button
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.innerHTML = "&times;";
+            removeBtn.style.cssText = "position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%; background-color: rgba(220, 53, 69, 0.8); color: white; border: none; font-size: 14px; font-weight: bold; line-height: 18px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; z-index: 5;";
+            removeBtn.addEventListener("mouseover", () => removeBtn.style.backgroundColor = "rgba(220, 53, 69, 1)");
+            removeBtn.addEventListener("mouseout", () => removeBtn.style.backgroundColor = "rgba(220, 53, 69, 0.8)");
+            removeBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                this.uploadedImages.splice(index, 1);
+                this.renderGalleryPreviews();
+            });
+            card.appendChild(removeBtn);
+
+            previewContainer.appendChild(card);
+        });
+
+        // Habilitar/Deshabilitar área de carga según el límite
+        const fileInput = document.getElementById("prodGalleryFileInput");
+        const uploadBox = fileInput ? fileInput.parentElement : null;
+        const uploadText = document.getElementById("prodGalleryUploadText");
+        if (uploadBox) {
+            if (this.uploadedImages.length >= 6) {
+                uploadBox.style.pointerEvents = "none";
+                uploadBox.style.opacity = "0.4";
+                if (uploadText) uploadText.textContent = "Límite de 6 fotos alcanzado";
+            } else {
+                uploadBox.style.pointerEvents = "auto";
+                uploadBox.style.opacity = "1";
+                if (uploadText) uploadText.textContent = "Hacé clic o arrastrá para subir fotos";
+            }
+        }
     },
 
     switchTab: function(tabName) {
@@ -593,10 +695,9 @@ window.views.admin = {
             modalTitle.textContent = "Nuevo Producto";
             this.editingProductId = null;
             
-            // Limpiar inputs adicionales
-            document.getElementById("prodImageBase64").value = "";
-            document.getElementById("prodImagePreviewContainer").style.display = "none";
-            document.getElementById("prodImageFile").value = "";
+            // Limpiar galería de fotos
+            this.uploadedImages = [];
+            this.renderGalleryPreviews();
             
             document.getElementById("prodOnSale").checked = false;
             document.getElementById("prodSalePriceGroup").style.display = "none";
@@ -679,15 +780,9 @@ window.views.admin = {
                         salePriceInput.required = false;
                     }
 
-                    // Cargar vista previa de foto actual
-                    if (prod.image) {
-                        document.getElementById("prodImageBase64").value = prod.image;
-                        document.getElementById("prodImagePreview").src = prod.image;
-                        document.getElementById("prodImagePreviewContainer").style.display = "flex";
-                    } else {
-                        document.getElementById("prodImageBase64").value = "";
-                        document.getElementById("prodImagePreviewContainer").style.display = "none";
-                    }
+                    // Cargar galería de fotos
+                    this.uploadedImages = prod.images && prod.images.length > 0 ? [...prod.images] : (prod.image ? [prod.image] : []);
+                    this.renderGalleryPreviews();
 
                     modalOverlay.classList.add("active");
                 }
@@ -714,7 +809,7 @@ window.views.admin = {
         // Capturar datos del formulario
         const sizeVal = document.getElementById("prodSizes").value;
         const onSale = document.getElementById("prodOnSale").checked;
-        const base64Value = document.getElementById("prodImageBase64").value;
+        const base64Value = (this.uploadedImages && this.uploadedImages.length > 0) ? this.uploadedImages[0] : "";
 
         // Recopilar variantes de color + talle
         const variantRows = document.querySelectorAll(".variant-row");
@@ -759,9 +854,9 @@ window.views.admin = {
         }
 
         // Construir la galería completa de imágenes
-        const uniqueImages = [];
-        if (mainImage) {
-            uniqueImages.push(mainImage);
+        const uniqueImages = this.uploadedImages && this.uploadedImages.length > 0 ? [...this.uploadedImages] : [];
+        if (mainImage && !uniqueImages.includes(mainImage)) {
+            uniqueImages.unshift(mainImage);
         }
         variants.forEach(v => {
             if (v.image && !uniqueImages.includes(v.image)) {
@@ -875,7 +970,7 @@ window.views.admin = {
 
             <!-- MODAL DETALLES DEL PEDIDO (OCULTO) -->
             <div class="admin-modal-overlay" id="orderModalOverlay">
-                <div class="admin-modal" style="width: 500px;">
+                <div class="admin-modal" style="max-width: 500px; width: 100%;">
                     <div class="admin-modal-header">
                         <h3>Detalle del Pedido</h3>
                         <button class="icon-btn" id="closeOrderModalBtn">
@@ -1100,13 +1195,12 @@ window.views.admin = {
                     placeholder.style.display = "none";
                     window.components.showToast("¡Foto de variante cargada con éxito!", "success");
                     
-                    const prodImageBase64 = document.getElementById("prodImageBase64");
-                    const prodImagePreview = document.getElementById("prodImagePreview");
-                    const prodImagePreviewContainer = document.getElementById("prodImagePreviewContainer");
-                    if (prodImageBase64 && !prodImageBase64.value) {
-                        prodImageBase64.value = base64;
-                        if (prodImagePreview) prodImagePreview.src = base64;
-                        if (prodImagePreviewContainer) prodImagePreviewContainer.style.display = "flex";
+                    if (!this.uploadedImages) {
+                        this.uploadedImages = [];
+                    }
+                    if (this.uploadedImages.length === 0) {
+                        this.uploadedImages.push(base64);
+                        this.renderGalleryPreviews();
                     }
                 };
                 reader.readAsDataURL(file);
@@ -1267,7 +1361,7 @@ window.views.admin = {
 
             <!-- MODAL LECTURA DE MENSAJE (OCULTO) -->
             <div class="admin-modal-overlay" id="messageModalOverlay" style="z-index: 1000;">
-                <div class="admin-modal" style="width: 500px;">
+                <div class="admin-modal" style="max-width: 500px; width: 100%;">
                     <div class="admin-modal-header">
                         <h3>Detalle del Mensaje</h3>
                         <button class="icon-btn" id="closeMessageModalBtn">
