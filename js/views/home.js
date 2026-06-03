@@ -122,8 +122,8 @@ window.views.home = {
             ` : ''}
 
             <!-- Banner Promocional Estilo Confección -->
-            <section style="background-color: var(--color-bg-alt); border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); padding: 5rem 0; margin-bottom: 6rem;">
-                <div class="container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
+            <section class="home-banner-section">
+                <div class="container home-banner-grid">
                     <div style="aspect-ratio: 1.5/1; border-radius: var(--border-radius-lg); overflow: hidden; background-color: var(--color-card); border: 1px solid var(--color-border);">
                         <img src="${window.state.getProductById("prod-2").image}" alt="Taller de Confección" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>

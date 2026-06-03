@@ -1263,7 +1263,7 @@ window.views.admin = {
                 <h3 style="font-family: var(--font-heading); font-size: 1.3rem; margin-bottom: 1rem; color: var(--color-primary); display: flex; align-items: center; gap: 0.5rem;">
                     <i data-lucide="settings" style="width: 20px; height: 20px;"></i> Configuración de Canales de Contacto
                 </h3>
-                <form id="contactSettingsForm" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: flex-end;">
+                <form id="contactSettingsForm">
                     <div class="form-group" style="margin: 0;">
                         <label class="form-label" for="settingsEmail" style="font-size: 0.85rem; font-weight: 600;">Email de Destino</label>
                         <input type="email" id="settingsEmail" class="form-control" value="${settings.email}" required style="padding: 0.5rem 0.75rem;">

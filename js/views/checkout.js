@@ -82,7 +82,7 @@ window.views.checkout = {
                                 </div>
                             </div>
 
-                            <div class="form-grid" style="grid-template-columns: 2fr 1fr;">
+                            <div class="form-grid form-grid-2-1">
                                 <div class="form-group">
                                     <label class="form-label" for="chkCity">Ciudad / Localidad *</label>
                                     <input type="text" id="chkCity" class="form-control" placeholder="Belgrano, CABA" required>

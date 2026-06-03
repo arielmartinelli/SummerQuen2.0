@@ -11,7 +11,8 @@ class Router {
             'product': window.views.product,
             'checkout': window.views.checkout,
             'contact': window.views.contact,
-            'admin': window.views.admin
+            'admin': window.views.admin,
+            'sizes': window.views.sizes
         };
 
         window.addEventListener('hashchange', () => this.handleRouting());
