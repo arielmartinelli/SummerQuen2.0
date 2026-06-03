@@ -1121,7 +1121,6 @@ window.views.admin = {
     createVariantRow: function(container, color = "", size = "", stock = 0, image = "") {
         const row = document.createElement("div");
         row.className = "variant-row";
-        row.style.cssText = "display: grid; grid-template-columns: 2fr 1fr 1fr 3fr auto; gap: 0.5rem; align-items: center; background-color: var(--color-bg-alt); padding: 0.6rem; border-radius: var(--border-radius-sm); border: 1px solid var(--color-border); margin-bottom: 0.25rem;";
         
         const previewStyle = image ? "display: block;" : "display: none;";
         const placeholderStyle = image ? "display: none;" : "display: flex; align-items: center; justify-content: center;";
@@ -1137,15 +1136,15 @@ window.views.admin = {
             <div>
                 <input type="number" class="form-control variant-stock-input" placeholder="Stock" min="0" value="${stock}" required style="padding: 0.4rem 0.5rem; font-size: 0.8rem;">
             </div>
-            <div style="display: flex; align-items: center; gap: 0.4rem; overflow: hidden;">
+            <div style="display: flex; align-items: center; gap: 0.4rem; overflow: hidden; flex-grow: 1;">
                 <div class="variant-img-preview-wrapper" style="width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--color-border); overflow: hidden; background: var(--color-bg); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
                     <img class="variant-img-preview" ${srcAttr} style="width: 100%; height: 100%; object-fit: cover; ${previewStyle}">
                     <span class="variant-img-placeholder" style="font-size: 0.55rem; color: var(--color-text-muted); font-weight: 500; ${placeholderStyle}">No</span>
                 </div>
-                <input type="file" class="variant-file-input" accept="image/*" style="font-size: 0.7rem; cursor: pointer; flex-grow: 1; max-width: 120px;">
+                <input type="file" class="variant-file-input" accept="image/*" style="font-size: 0.7rem; cursor: pointer; flex-grow: 1;">
                 <input type="hidden" class="variant-base64-input" value="${image}">
             </div>
-            <button type="button" class="btn btn-danger btn-sm remove-variant-btn" style="padding: 0.3rem; border-radius: var(--border-radius-sm); display: flex; align-items: center; justify-content: center;" title="Eliminar Variante">
+            <button type="button" class="btn btn-danger btn-sm remove-variant-btn" style="padding: 0.3rem; border-radius: var(--border-radius-sm); display: inline-flex; align-items: center; justify-content: center;" title="Eliminar Variante">
                 <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
             </button>
         `;

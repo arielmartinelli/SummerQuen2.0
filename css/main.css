@@ -300,6 +300,43 @@ ul {
     .nav-menu.active {
         left: 0;
     }
+
+    /* Redimensionar logo para evitar desbordes y descuadres */
+    .logo {
+        font-size: 1.4rem !important;
+        gap: 0.5rem !important;
+    }
+    
+    .logo-img {
+        width: 36px !important;
+        height: 36px !important;
+    }
+
+    .header-actions {
+        gap: 0.6rem !important;
+    }
+
+    .icon-btn {
+        width: 38px !important;
+        height: 38px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo {
+        font-size: 1.15rem !important;
+        gap: 0.4rem !important;
+    }
+    
+    .logo-img {
+        width: 30px !important;
+        height: 30px !important;
+        border-width: 1px !important;
+    }
+
+    .container {
+        padding: 0 0.8rem !important;
+    }
 }
 
 /* MAIN CONTENT WRAPPER */
