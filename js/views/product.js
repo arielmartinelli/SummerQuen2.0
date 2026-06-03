@@ -34,33 +34,7 @@ window.views.product = {
         };
 
         // Formatear precio
-        const formatter = new Intl.NumberFormat('es-AR', {
-            style: 'currency',
-            currency: 'ARS',
-            minimumFractionDigits: 0
-        });
-
-        let priceHtml = "";
-        if (product.onSale && product.salePrice > 0) {
-            const discountPct = Math.round((1 - (product.salePrice / product.price)) * 100);
-            priceHtml = `
-                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;">
-                    <span style="text-decoration: line-through; color: var(--color-text-muted); font-size: 1.3rem; font-weight: 500;">
-                        ${formatter.format(product.price)}
-                    </span>
-                    <span style="font-size: 2.2rem; font-weight: 700; color: var(--color-danger);">
-                        ${formatter.format(product.salePrice)}
-                    </span>
-                    <span class="status-badge" style="background-color: var(--color-danger-bg); color: var(--color-danger); font-size: 0.85rem; font-weight: 700; padding: 0.4rem 0.8rem; border-radius: var(--border-radius-sm);">
-                        ¡${discountPct}% OFF!
-                    </span>
-                </div>
-            `;
-        } else {
-            priceHtml = `
-                <div class="product-price">${formatter.format(product.price)}</div>
-            `;
-        }
+        const priceHtml = this.renderPriceHtml(product, initialVariant);
 
         // Estilos para galería
         const mainImage = (initialVariant && initialVariant.image) ? initialVariant.image : product.image;
@@ -152,7 +126,7 @@ window.views.product = {
                             Categoría: ${product.category}
                         </span>
                         <h1 class="product-title">${product.title}</h1>
-                        ${priceHtml}
+                        <div id="productPriceDisplayContainer">${priceHtml}</div>
                         
                         <p class="product-description">${product.description}</p>
                         
@@ -320,6 +294,12 @@ window.views.product = {
             );
 
             if (variant) {
+                // Actualizar precio dinámico de la variante
+                const priceContainer = document.getElementById("productPriceDisplayContainer");
+                if (priceContainer) {
+                    priceContainer.innerHTML = this.renderPriceHtml(product, variant);
+                }
+
                 // Actualizar imagen principal si la variante tiene
                 if (variant.image) {
                     mainImageEl.src = variant.image;
@@ -365,6 +345,10 @@ window.views.product = {
                 this.selectedConfig.quantity = variant.stock > 0 ? 1 : 0;
             } else {
                 // Combinación color + talle no fabricada
+                const priceContainer = document.getElementById("productPriceDisplayContainer");
+                if (priceContainer) {
+                    priceContainer.innerHTML = this.renderPriceHtml(product, null);
+                }
                 if (stockLabelEl) {
                     stockLabelEl.innerHTML = `<strong style="color: var(--color-danger);">Combinación no disponible</strong>`;
                 }
@@ -391,6 +375,45 @@ window.views.product = {
         }
 
         if (window.lucide) window.lucide.createIcons();
+    },
+
+    renderPriceHtml: function(product, variant = null) {
+        const formatter = new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS',
+            minimumFractionDigits: 0
+        });
+
+        let basePrice = product.price;
+        if (variant && variant.price !== undefined && variant.price !== null && variant.price > 0) {
+            basePrice = variant.price;
+        }
+
+        if (product.onSale && product.salePrice > 0) {
+            let salePrice = product.salePrice;
+            if (variant && variant.price !== undefined && variant.price !== null && variant.price > 0) {
+                const discountFactor = product.salePrice / product.price;
+                salePrice = Math.round(variant.price * discountFactor);
+            }
+            const discountPct = Math.round((1 - (salePrice / basePrice)) * 100);
+            return `
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;">
+                    <span style="text-decoration: line-through; color: var(--color-text-muted); font-size: 1.3rem; font-weight: 500;">
+                        ${formatter.format(basePrice)}
+                    </span>
+                    <span style="font-size: 2.2rem; font-weight: 700; color: var(--color-danger);">
+                        ${formatter.format(salePrice)}
+                    </span>
+                    <span class="status-badge" style="background-color: var(--color-danger-bg); color: var(--color-danger); font-size: 0.85rem; font-weight: 700; padding: 0.4rem 0.8rem; border-radius: var(--border-radius-sm);">
+                        ¡${discountPct}% OFF!
+                    </span>
+                </div>
+            `;
+        } else {
+            return `
+                <div class="product-price">${formatter.format(basePrice)}</div>
+            `;
+        }
     },
 
     renderError: function(container) {

@@ -641,6 +641,9 @@ window.views.admin = {
                             <button class="btn btn-outline btn-sm edit-prod-btn" data-id="${p.id}" style="padding: 0.4rem 0.8rem;" title="Editar">
                                 <i data-lucide="edit-2" style="width: 14px; height: 14px;"></i>
                             </button>
+                            <button class="btn btn-outline btn-sm duplicate-prod-btn" data-id="${p.id}" style="padding: 0.4rem 0.8rem;" title="Duplicar">
+                                <i data-lucide="copy" style="width: 14px; height: 14px;"></i>
+                            </button>
                             <button class="btn btn-danger btn-sm delete-prod-btn" data-id="${p.id}" style="padding: 0.4rem 0.8rem;" title="Eliminar">
                                 <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                             </button>
@@ -685,6 +688,7 @@ window.views.admin = {
     initProductsTabEvents: function() {
         const addBtn = document.getElementById("openAddProductModalBtn");
         const editButtons = document.querySelectorAll(".edit-prod-btn");
+        const duplicateButtons = document.querySelectorAll(".duplicate-prod-btn");
         const deleteButtons = document.querySelectorAll(".delete-prod-btn");
         
         const modalOverlay = document.getElementById("productModalOverlay");
@@ -740,7 +744,7 @@ window.views.admin = {
                         variantsContainer.innerHTML = "";
                         if (prod.variants && prod.variants.length > 0) {
                             prod.variants.forEach(v => {
-                                this.createVariantRow(variantsContainer, v.color, v.size || "", v.stock, v.image);
+                                this.createVariantRow(variantsContainer, v.color, v.size || "", v.stock, v.image, v.price);
                             });
                         } else if (prod.colors && prod.colors.length > 0) {
                             // Fallback robusto mapeando combinaciones
@@ -760,6 +764,80 @@ window.views.admin = {
                             });
                         } else {
                             this.createVariantRow(variantsContainer, "Único", "Único", prod.stock, prod.image);
+                        }
+                    }
+
+                    // Cargar estado de oferta
+                    const onSale = !!prod.onSale;
+                    document.getElementById("prodOnSale").checked = onSale;
+                    const salePriceGroup = document.getElementById("prodSalePriceGroup");
+                    const salePriceInput = document.getElementById("prodSalePrice");
+                    if (onSale) {
+                        salePriceGroup.style.display = "block";
+                        salePriceInput.value = prod.salePrice || "";
+                        salePriceInput.disabled = false;
+                        salePriceInput.required = true;
+                    } else {
+                        salePriceGroup.style.display = "none";
+                        salePriceInput.value = "";
+                        salePriceInput.disabled = true;
+                        salePriceInput.required = false;
+                    }
+
+                    // Cargar galería de fotos
+                    this.uploadedImages = prod.images && prod.images.length > 0 ? [...prod.images] : (prod.image ? [prod.image] : []);
+                    this.renderGalleryPreviews();
+
+                    modalOverlay.classList.add("active");
+                }
+            });
+        });
+
+        // Duplicar producto (cargar datos previos con id null para nuevo registro)
+        duplicateButtons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const id = btn.getAttribute("data-id");
+                const prod = window.state.getProductById(id);
+                
+                if (prod) {
+                    this.editingProductId = null;
+                    modalTitle.textContent = `Duplicar: ${prod.title}`;
+
+                    document.getElementById("prodTitle").value = `${prod.title} (Copia)`;
+                    document.getElementById("prodCategory").value = prod.category;
+                    document.getElementById("prodPrice").value = prod.price;
+                    document.getElementById("prodStock").value = prod.stock;
+                    document.getElementById("prodFeatured").value = prod.featured ? "true" : "false";
+                    document.getElementById("prodDesc").value = prod.description;
+                    document.getElementById("prodMaterials").value = prod.materials || "";
+                    document.getElementById("prodSizes").value = prod.sizes ? prod.sizes.join(", ") : "";
+
+                    // Cargar variantes de color + talle
+                    const variantsContainer = document.getElementById("variantsContainer");
+                    if (variantsContainer) {
+                        variantsContainer.innerHTML = "";
+                        if (prod.variants && prod.variants.length > 0) {
+                            prod.variants.forEach(v => {
+                                this.createVariantRow(variantsContainer, v.color, v.size || "", v.stock, v.image, v.price || "");
+                            });
+                        } else if (prod.colors && prod.colors.length > 0) {
+                            // Fallback robusto mapeando combinaciones
+                            const fallbackSizes = (prod.sizes && prod.sizes.length > 0) ? prod.sizes : ["Único"];
+                            const totalCombinations = prod.colors.length * fallbackSizes.length;
+                            const computedStock = Math.floor(prod.stock / totalCombinations);
+                            let combIndex = 0;
+                            
+                            prod.colors.forEach(col => {
+                                fallbackSizes.forEach(sz => {
+                                    const stockForThisComb = (combIndex === totalCombinations - 1)
+                                        ? prod.stock - (computedStock * (totalCombinations - 1))
+                                        : computedStock;
+                                    this.createVariantRow(variantsContainer, col, sz, stockForThisComb, prod.image, "");
+                                    combIndex++;
+                                });
+                            });
+                        } else {
+                            this.createVariantRow(variantsContainer, "Único", "Único", prod.stock, prod.image, "");
                         }
                     }
 
@@ -823,14 +901,16 @@ window.views.admin = {
             const sizeInput = row.querySelector(".variant-size-input");
             const stockInput = row.querySelector(".variant-stock-input");
             const base64Input = row.querySelector(".variant-base64-input");
+            const priceInput = row.querySelector(".variant-price-input");
 
             const color = colorInput ? colorInput.value.trim() : "";
             const size = sizeInput ? sizeInput.value.trim() : "";
             const stock = stockInput ? parseInt(stockInput.value) || 0 : 0;
             const image = base64Input ? base64Input.value : "";
+            const price = priceInput && priceInput.value.trim() !== "" ? parseFloat(priceInput.value) : null;
 
             if (color && size) {
-                variants.push({ color, size, stock, image });
+                variants.push({ color, size, stock, image, price });
                 if (!colors.includes(color)) {
                     colors.push(color);
                 }
@@ -1118,7 +1198,7 @@ window.views.admin = {
         `;
     },
 
-    createVariantRow: function(container, color = "", size = "", stock = 0, image = "") {
+    createVariantRow: function(container, color = "", size = "", stock = 0, image = "", price = "") {
         const row = document.createElement("div");
         row.className = "variant-row";
         
@@ -1135,6 +1215,9 @@ window.views.admin = {
             </div>
             <div>
                 <input type="number" class="form-control variant-stock-input" placeholder="Stock" min="0" value="${stock}" required style="padding: 0.4rem 0.5rem; font-size: 0.8rem;">
+            </div>
+            <div>
+                <input type="number" class="form-control variant-price-input" placeholder="Base" min="0" step="any" value="${price !== undefined && price !== null ? price : ''}" style="padding: 0.4rem 0.5rem; font-size: 0.8rem;">
             </div>
             <div style="display: flex; align-items: center; gap: 0.4rem; overflow: hidden; flex-grow: 1;">
                 <div class="variant-img-preview-wrapper" style="width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--color-border); overflow: hidden; background: var(--color-bg); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">

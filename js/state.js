@@ -784,10 +784,23 @@ class StateManager {
         // Usar la foto del color si tiene
         const itemImage = (variant && variant.image) ? variant.image : product.image;
 
+        let price = product.price;
+        if (variant && variant.price !== undefined && variant.price !== null && variant.price > 0) {
+            price = variant.price;
+        }
+        if (product.onSale && product.salePrice > 0) {
+            if (variant && variant.price !== undefined && variant.price !== null && variant.price > 0) {
+                const discountFactor = product.salePrice / product.price;
+                price = Math.round(variant.price * discountFactor);
+            } else {
+                price = product.salePrice;
+            }
+        }
+
         if (existingItem) {
             existingItem.quantity += parseInt(qty);
+            existingItem.price = price; // sync the price in case of edits
         } else {
-            const price = (product.onSale && product.salePrice > 0) ? product.salePrice : product.price;
             cart.push({
                 productId,
                 title: product.title,
